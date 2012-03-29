@@ -2,7 +2,7 @@
  * libav-mpeg.i - compatibility layer to expose av_* routines as mpeg_*
  * Use this as a drop-in replacemant for mpeg.i (from the ympeg plug-in).
  *
- * This file is part of yorick-libav, a Yorick plu-ing to write movies
+ * This file is part of yorick-av, a Yorick plu-ing to write movies
  * using LibAV/FFmpeg.
  *
  * Copyright (c) 2012 Thibaut Paumard

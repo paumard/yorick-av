@@ -1,4 +1,4 @@
-     yorick-libav - write movies in Yorick using LibAV 
+     yorick-av - write movies in Yorick using LibAV 
  
 This plug-in uses the LibAV / FFmpeg family of libraries (libavformat,
 libavcodec, libavutils, libswscale...) to write movies from within

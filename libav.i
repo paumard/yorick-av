@@ -2,7 +2,7 @@ if (!is_void(plug_in)) plug_in, "yav";
 local libav;
 /* DOCUMENT #include "libav.i"
  *  
- * This is yorick-libav, a Yorick plu-ing to write movies using
+ * This is yorick-av, a Yorick plu-ing to write movies using
  * LibAV/FFmpeg.
  *
  * This plug-in uses the LibAV / FFmpeg family of libraries

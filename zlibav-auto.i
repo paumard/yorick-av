@@ -1,7 +1,7 @@
 /*
  * zlibav-auto.i - auto-loads for libav.i
  * 
- * This file is part of yorick-libav, a Yorick plu-ing to write movies
+ * This file is part of yorick-av, a Yorick plu-ing to write movies
  * using LibAV/FFmpeg.
  *
  * Copyright (c) 2012 Thibaut Paumard

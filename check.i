@@ -1,6 +1,6 @@
 /*
- * check.i - Check / example file for yorick-libav
- * This file is part of yorick-libav, a Yorick plu-ing to write movies
+ * check.i - Check / example file for yorick-av
+ * This file is part of yorick-av, a Yorick plu-ing to write movies
  * using LibAV/FFmpeg.
  *
  * ============================================================================
