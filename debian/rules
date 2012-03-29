@@ -8,4 +8,4 @@ export YAV_NODISPLAY := nodisplay
 	dh $@
 
 override_dh_auto_install-arch:
-	dh_installyorick --infofile=yav.info
+	dh_installyorick
