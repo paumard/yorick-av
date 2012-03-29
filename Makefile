@@ -69,6 +69,9 @@ MAKE_TEMPLATE = protect-against-1.5
 
 # ------------------------------------- targets and rules for this package
 
+install::
+	$(YNSTALL) $(PKG_I_START) $(DEST_Y_HOME)/packages/installed/
+
 # simple example:
 #myfunc.o: myapi.h
 # more complex example (also consider using PKG_CFLAGS above):
