@@ -1,5 +1,11 @@
 /*
+ * yav.c
+ * This file is part of yorick-libav, a Yorick plu-ing to write movies
+ * using LibAV/FFmpeg. It is based on the famous FFmpeg example file
+ * example-output.c by Fabrice Bellard and keeps its license.
+ *
  * Copyright (c) 2003 Fabrice Bellard
+ * Copyright (c) 2012 Thibaut Paumard
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal

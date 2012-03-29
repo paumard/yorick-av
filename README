@@ -1,0 +1,62 @@
+     yorick-libav - write movies in Yorick using LibAV 
+ 
+This plug-in uses the LibAV / FFmpeg family of libraries (libavformat,
+libavcodec, libavutils, libswscale...) to write movies from within
+Yorick.
+
+In essence, it is a compatible rewrite of the ympeg plug-in, but
+instead of shipping its own, trimmed-down version of FFmpeg, libav
+uses the full-featured LibAV (or FFmpeg). This allows using more
+recent codecs such as h.264, MP4 / DivX, Ogg/Vorbis.
+
+libav-mpeg.i provides a drop-in replacement for mpeg.i
+avtest.i contains a limited test suite
+
+INSTALLATION
+
+First install libavcodec, libavformat, libavutil and libswscale from
+either the LibAV or the FFmpeg project (compatible versions are yet to
+check, LibAV 0.8.1 is known to work).
+
+Then as usual for Yorick plug-ins:
+
+yorick -batch make.i
+make
+make check
+make install
+
+USAGE
+
+From within Yorick:
+
+#include "libav.i"
+help, av_create
+
+
+COPYRIGHT AND LICENSE INFORMATION
+
+ The C code is based on the famous FFmpeg example file
+example-output.c by Fabrice Bellard
+
+Copyright (c) 2003 Fabrice Bellard (for yav.c)
+Copyright (c) 2012 Thibaut Paumard (for yac.c, *libav*.i)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+
+

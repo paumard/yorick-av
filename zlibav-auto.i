@@ -1,5 +1,6 @@
 /*
- * avtest.i - test / example file for libav.i 
+ * zlibav-auto.i - auto-loads for libav.i
+ * 
  * This file is part of yorick-libav, a Yorick plu-ing to write movies
  * using LibAV/FFmpeg.
  *
@@ -23,24 +24,14 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
  * THE SOFTWARE.
  */
-if (open("libav.i", "r", 1)) plug_dir, _("./", plug_dir());
-require, "libav.i";
 
-func avtest_draw_frame(i)
-{
-  x   = span(0, 2*pi, 100);
-  nframes=200.;
-  y   = sin(x-2.*pi*i/nframes);
-  plg, y, x;
-  return i<=nframes;
-}
+autoload, "libav.i";
+autoload, "libav.i", libav, av_create, av_write, av_close, av_movie;
+autoload, "avtest.i";
+autoload, "avtest.i", avtest;
 
-func avtest(fname)
-{
-  if (is_void(fname)) fname = "avtest2.ogg";
-  winkill;
-  window;
-  range, -1, 1;
-  av_movie, fname, avtest_draw_frame;
-  winkill;
-}
+// be nice to mpeg.i: if autoloads are already in place, don't overide them
+// this file should be parsed after mpeg, ympeg, yompeg or yorz 
+autoload, "libav-mpeg.i";
+if (!is_void(mpeg_create))
+  autoload, "libav-mpeg.i", mpeg_create, mpeg_write, mpeg_close, mpeg_movie;

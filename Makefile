@@ -33,12 +33,12 @@ PKG_LDFLAGS=
 EXTRA_PKGS=$(Y_EXE_PKGS)
 
 # list of additional files for clean
-PKG_CLEAN=tmp.* test.* test2.*
+PKG_CLEAN=libavtest.* libavcheck.* test.mpg
 
 # autoload file for this package, if any
-PKG_I_START=
+PKG_I_START=zlibav-auto.i
 # non-pkg.i include files for this package, if any
-PKG_I_EXTRA=
+PKG_I_EXTRA=avtest.i libav-mpeg.i
 
 # -------------------------------- standard targets and rules (in Makepkg)
 
