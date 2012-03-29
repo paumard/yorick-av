@@ -1,0 +1,18 @@
+Source: yorick-av
+Section: science
+Priority: optional
+Maintainer: Thibaut Paumard <paumard@users.sourceforge.net>
+Build-Depends: debhelper (>= 7.0.50~), yorick-dev (>= 2.2),
+	       libavformat-dev, libavutil-dev, libavcodec-dev, libswscale-dev
+Standards-Version: 3.9.3.0
+Homepage: http://github.com/paumard/yorick-av
+
+Package: yorick-av
+Architecture: any
+Depends: yorick (>= 2.2), ${shlibs:Depends}, ${misc:Depends}
+Description: write movies from Yorick in various formats
+ This is a compiled add-on for yorick (an interpreted computer
+ language specialized for numerical and scientific problems).
+ Yorick-mpeg adds support for writing movies in various formats (AVI,
+ OGG, MP4...) using LibAV. It can be used as a replacement for
+ yorick-mpeg which only produces MPEG1 movies.

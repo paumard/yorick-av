@@ -1,0 +1,11 @@
+#!/usr/bin/make -f
+
+# Don't run tests which require an X11 display. The value of this
+# environment variable has no importance.
+export YAV_NODISPLAY := nodisplay
+
+%:
+	dh $@
+
+override_dh_auto_install-arch:
+	dh_installyorick --infofile=yav.info
