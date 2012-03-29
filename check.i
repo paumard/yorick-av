@@ -72,8 +72,7 @@ for (e=1; e<=numberof(exts); ++e) {
 if (!get_env("YAV_NODISPLAY")) {
 
   require, "avtest.i";
-  avtest, "libavtest.mpg";
-  avtest, "libavtest.mp4";
+  for (e=1; e<=numberof(exts); ++e) avtest, "libavtest."+exts(e);
 
   include,"mpgtest.i", 3;
   require, "libav-mpeg.i";

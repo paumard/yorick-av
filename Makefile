@@ -23,7 +23,7 @@ OBJS=yav.o
 PKG_EXENAME=yorick
 
 # PKG_DEPLIBS=-Lsomedir -lsomelib   for dependencies of this package
-PKG_DEPLIBS=-lavformat -lswscale -lavutil
+PKG_DEPLIBS=-lavformat -lswscale -lavutil -lavcodec
 # set compiler (or rarely loader) flags specific to this package
 PKG_CFLAGS=
 PKG_LDFLAGS=

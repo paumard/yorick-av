@@ -32,6 +32,22 @@
 #include <libswscale/swscale.h>
 #include <libavutil/opt.h>
 
+#ifndef AVIO_FLAG_WRITE
+#  define AVIO_FLAG_WRITE AVIO_WRONLY
+#endif
+
+#if (LIBAVFORMAT_VERSION_MAJOR < 53) || \
+  ((LIBAVFORMAT_VERSION_MAJOR == 53) && (LIBAVFORMAT_VERSION_MINOR < 9))
+#  define avformat_new_stream(a, b) av_new_stream(a, 0)
+#endif
+#if (LIBAVUTIL_VERSION_MAJOR < 50) || \
+  ((LIBAVUTIL_VERSION_MAJOR == 50) && (LIBAVUTIL_VERSION_MINOR < 44))
+  // av_opt_set missing at least until this version
+  int av_opt_set (void *obj, const char * name, const char * val,
+		  int search_flags)
+  { y_error("av_opt_set unimplemented in this libav/ffmpeg"); return -1; }
+#endif
+
 /* default parameter values */
 #define YAV_BIT_RATE 400000
 #define YAV_FRAME_RATE 24
@@ -53,7 +69,7 @@ typedef struct yav_ctxt {
 void yav_free(void*obj);
 static y_userobj_t yav_ops = {"LibAV object", &yav_free, 0, 0, 0, 0};
 
-void yav_opencodec(yav_ctxt *obj, uint width, uint height);
+void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height);
 void yav_h264preset(AVCodecContext *ctx);
 
 yav_ctxt *ypush_av()
@@ -245,7 +261,7 @@ void yav_h264preset(AVCodecContext *ctx) {
 */
 }
 
-void yav_opencodec(yav_ctxt *obj, uint width, uint height) {
+void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
   obj->video_st->codec->width=width;
   obj->video_st->codec->height=height;
   av_dump_format(obj->oc, 0, obj->oc->filename, 1);

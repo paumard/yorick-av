@@ -1,4 +1,5 @@
-     yorick-av - write movies in Yorick using LibAV 
+
+    ***  yorick-av - write movies in Yorick using LibAV ***
  
 This plug-in uses the LibAV / FFmpeg family of libraries (libavformat,
 libavcodec, libavutils, libswscale...) to write movies from within
@@ -13,6 +14,7 @@ libav-mpeg.i provides a drop-in replacement for mpeg.i
 avtest.i contains a limited test suite
 
 INSTALLATION
+============
 
 First install libavcodec, libavformat, libavutil and libswscale from
 either the LibAV or the FFmpeg project (compatible versions are yet to
@@ -26,6 +28,7 @@ make check
 make install
 
 USAGE
+=====
 
 From within Yorick:
 
@@ -34,12 +37,13 @@ help, av_create
 
 
 COPYRIGHT AND LICENSE INFORMATION
+=================================
 
- The C code is based on the famous FFmpeg example file
+The C code is based on the famous FFmpeg example file
 example-output.c by Fabrice Bellard
 
 Copyright (c) 2003 Fabrice Bellard (for yav.c)
-Copyright (c) 2012 Thibaut Paumard (for yac.c, *libav*.i)
+Copyright (c) 2012 Thibaut Paumard (for yav.c, *libav*.i)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
