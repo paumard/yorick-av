@@ -1,0 +1,9 @@
+:newsubsection
+yorick-av: write movies in various formats
+
+:libav
+write movies in OGG, MKV, MP4 and other formats
+
+:libav-mpeg
+drop-in replacement for mpeg.i
+
