@@ -9,10 +9,12 @@ local libav;
  * (libavformat, libavcodec, libavutils, libswscale...) to write
  * movies from within Yorick.
  *
- * In essence, it is a compatible rewrite of the ympeg plug-in, but
+ * In essence, it is a compatible rewrite of the yompeg plug-in, but
  * instead of shipping its own, trimmed-down version of FFmpeg, libav
  * uses the full-featured LibAV (or FFmpeg). This allows using more
- * recent codecs such as h.264, MP4 / DivX, Ogg/Vorbis.
+ * recent codecs than MPEG1, such as h.264, MP4 / DivX, ogg/vorbis
+ * (Theora). yorick-av can write in about any format supported by
+ * LibAV: mpeg, mp4, avi, mov, ogg, mkv.
  *
  * libav-mpeg.i provides a drop-in replacement for mpeg.i
  * avtest.i contains a limited test suite
@@ -43,23 +45,6 @@ local libav;
  * THE SOFTWARE.
  *
  * SEE ALSO: av_create, av_write, av_close, av_movie, avtest
- */
-
-local libav;
-/* DOCUMENT libav plug-in - write movies using LibAV
- *
- * This plug-in uses the LibAV / FFmpeg family of libraries
- * (libavformat, libavcodec, libavutils, libswscale...) to write
- * movies from within Yorick.
- *
- * In essence, it is a compatible rewrite of the ympeg plug-in, but
- * instead of shipping its own, trimmed-down version of FFmpeg, libav
- * uses the full-featured LibAV (or FFmpeg). This allows using more
- * recent codecs such as h.264, MP4 / DivX, Ogg/Vorbis.
- *
- * libav-mpeg.i provides a drop-in replacement for mpeg.i
- *
- * SEE ALSO: av_create, av_write, av_close, av_movie
  */
 
 extern av_create;
