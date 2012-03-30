@@ -119,9 +119,35 @@ void yav_free(void*obj_) {
 void
 Y_av_create(int argc)
 {
-  char *filename = ygets_q(argc-1);
+
+  // PARSE ARGUMENTS: SEPARATE KEYWORDS FROM POSITIONAL ARGUMENTS
+  static char * knames[] = {
+    "vcodec", 0
+  };
+#define YAC_CREATE_NKW 1
+  static long kglobs[YAC_CREATE_NKW+1];
+  int kiargs[YAC_CREATE_NKW];
+  int piargs[]={-1, -1};
+
+  yarg_kw_init(knames, kglobs, kiargs);
+  int iarg=argc-1, parg=0;
+  y_warn("parsing arguments");
+  while (iarg>=0) {
+    iarg = yarg_kw(iarg, kglobs, kiargs);
+    if (iarg>=0) {
+      if (parg<2) piargs[parg++]=iarg--;
+      else y_error("av_create takes at most 2 positional arguments");
+    }
+  }
+
+  // INTERPRET ARGUMENTS
+  // filename (mandatory)
+  if ((iarg=piargs[0])<0) y_error("FILENAME must be specified");
+  char *filename = ygets_q(iarg);
+
+  // params vector (optional)
   long *params = 0;
-  if (argc>=2) {
+  if (piargs[1]>=0) {
     long ntot ;
     long dims[Y_DIMSIZE]={0,0};
     params = ygeta_l(argc-2, &ntot, dims);
@@ -131,6 +157,13 @@ Y_av_create(int argc)
       y_error("bad values in PARAMS vector");
   }
 
+  // vcodec keyword
+  char* vcodec = NULL;
+  if ((iarg=kiargs[0])>=0) {
+    vcodec = ygets_q(iarg);
+  }
+
+  // PUSH RETURN VALUE
   yav_ctxt * obj = ypush_av();
 
   /* allocate the output media context */
@@ -159,7 +192,11 @@ Y_av_create(int argc)
     AVCodecContext *c;
     obj->video_st = avformat_new_stream(obj->oc, NULL);
     c = obj->video_st->codec;
-    c->codec_id = obj->oc->oformat->video_codec;
+    if (vcodec) {
+      AVCodec *codec = avcodec_find_encoder_by_name(vcodec);
+      if (!codec) y_error("can't find requested codec");
+      c->codec_id = codec->id;
+    } else c->codec_id = obj->oc->oformat->video_codec;
     c->codec_type = AVMEDIA_TYPE_VIDEO;
 
     /* put sample parameters */
@@ -180,16 +217,30 @@ Y_av_create(int argc)
         c->flags |= CODEC_FLAG_GLOBAL_HEADER;
 
 
-    if (obj->oc->oformat->video_codec == CODEC_ID_MSMPEG4V3) {
-      // MSMPEG4 dosen't support B frames
+    // codec-specific limitations
+    switch (c->codec_id) {
+    case CODEC_ID_RAWVIDEO:
+    case CODEC_ID_GIF:
+      c->pix_fmt = PIX_FMT_RGB24;
+      break;
+    case CODEC_ID_MSMPEG4V3:
+    case CODEC_ID_H263:
+    case CODEC_ID_H263P:
+    case CODEC_ID_RV10:
+    case CODEC_ID_RV20:
+    case CODEC_ID_FLV1:
       c->max_b_frames = 0;
-    } else if (obj->oc->oformat->video_codec == CODEC_ID_H264) {
+      break;
+    case CODEC_ID_H264:
       yav_h264preset(c);
       if (params && params[0])     c->bit_rate      = params[0];
       if (params && params[1])     c->time_base.den = params[1];
       if (params && params[2])     c->gop_size      = params[2];
       if (params && params[3]>=0)  c->max_b_frames  = params[3];
+      break;
+    default:;
     }
+
 
   }
 
@@ -308,19 +359,19 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
        picture is needed too. It is then converted to the required
        output format */
     if (c->pix_fmt != PIX_FMT_RGB24) {
-    obj->tmp_picture = avcodec_alloc_frame();
-    if (!obj->tmp_picture) {
-      y_error("Could not allocate picture");
-    }
-    size = avpicture_get_size(PIX_FMT_RGB24, c->width, c->height);
-    uint8_t *tmp_picture_buf = av_malloc(size);
-    if (!tmp_picture_buf) {
-      av_freep(obj->tmp_picture);
-      av_freep(obj->picture);
-      y_error("unable to allocate memory");
-    }
-    avpicture_fill((AVPicture *)obj->tmp_picture, tmp_picture_buf,
-                   PIX_FMT_RGB24, c->width, c->height);
+      obj->tmp_picture = avcodec_alloc_frame();
+      if (!obj->tmp_picture) {
+	y_error("Could not allocate picture");
+      }
+      size = avpicture_get_size(PIX_FMT_RGB24, c->width, c->height);
+      uint8_t *tmp_picture_buf = av_malloc(size);
+      if (!tmp_picture_buf) {
+	av_freep(obj->tmp_picture);
+	av_freep(obj->picture);
+	y_error("unable to allocate memory");
+      }
+      avpicture_fill((AVPicture *)obj->tmp_picture, tmp_picture_buf,
+		     PIX_FMT_RGB24, c->width, c->height);
     }
 
   }
@@ -396,7 +447,7 @@ Y_av_write(int argc)
 	      obj->tmp_picture->linesize,
 	      0, c->height, obj->picture->data, obj->picture->linesize);
   } else {
-    av_image_copy(obj->picture->data, obj->tmp_picture->linesize,
+    av_image_copy(obj->picture->data, obj->picture->linesize,
 		  src, src_linesizes, PIX_FMT_RGB24, c->width, c->height);
   }
 
