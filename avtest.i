@@ -35,12 +35,14 @@ func avtest_draw_frame(i)
   return i<=nframes;
 }
 
-func avtest(fname, vcodec=)
+func avtest(fname, params=, vcodec=, pix_fmt=, b=, r=, g=, bf=)
 {
   if (is_void(fname)) fname = "avtest2.ogg";
   winkill;
   window;
   range, -1, 1;
-  av_movie, fname, avtest_draw_frame, vcodec=vcodec;
+  av_movie, fname, avtest_draw_frame, params=params,
+    vcodec=vcodec, pix_fmt=pix_fmt,
+    b=b, r=r, g=g, bf=bf;
   winkill;
 }

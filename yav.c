@@ -50,11 +50,12 @@
 
 /* default parameter values */
 #define YAV_BIT_RATE 400000
-#define YAV_FRAME_RATE 24
-#define YAV_GOP_SIZE 10
-#define YAV_MAX_B_FRAMES 1
+#define YAV_FRAME_RATE   24
+#define YAV_GOP_SIZE     25
+#define YAV_MAX_B_FRAMES 16
 #define YAV_PIX_FMT PIX_FMT_YUV420P /* default pix_fmt */
 
+inline int yav_arg_set(iarg) { return (iarg >= 0) && !yarg_nil(iarg); }
 
 typedef struct yav_ctxt {
   AVFrame *picture, *tmp_picture;
@@ -65,6 +66,7 @@ typedef struct yav_ctxt {
   AVStream *audio_st, *video_st;
   struct SwsContext *img_convert_ctx;
   AVCodec *codec;
+  int open;
 } yav_ctxt;
 void yav_free(void*obj);
 static y_userobj_t yav_ops = {"LibAV object", &yav_free, 0, 0, 0, 0};
@@ -83,12 +85,13 @@ yav_ctxt *ypush_av()
   obj->video_st=0;
   obj->img_convert_ctx = 0;
   obj->codec=0;
+  obj->open=0;
   //  audio_st=0;
 }
 
 void yav_free(void*obj_) {
   yav_ctxt * obj = (yav_ctxt *)obj_;
-  av_write_trailer(obj->oc);
+  if (obj->open) av_write_trailer(obj->oc);
   if (obj->picture){
     av_free(obj->picture->data[0]);
     av_free(obj->picture);
@@ -119,12 +122,15 @@ void yav_free(void*obj_) {
 void
 Y_av_create(int argc)
 {
+  static long default_params[]=
+    {YAV_BIT_RATE, YAV_FRAME_RATE, YAV_GOP_SIZE, YAV_MAX_B_FRAMES};
+  long *params=default_params;
 
   // PARSE ARGUMENTS: SEPARATE KEYWORDS FROM POSITIONAL ARGUMENTS
   static char * knames[] = {
-    "vcodec", 0
+    "vcodec", "pix_fmt", "b", "r", "g", "bf", 0
   };
-#define YAC_CREATE_NKW 1
+#define YAC_CREATE_NKW 6
   static long kglobs[YAC_CREATE_NKW+1];
   int kiargs[YAC_CREATE_NKW];
   int piargs[]={-1, -1};
@@ -139,28 +145,31 @@ Y_av_create(int argc)
     }
   }
 
-  // INTERPRET ARGUMENTS
+  // INTERPRET POSITIONAL ARGUMENTS
   // filename (mandatory)
   if ((iarg=piargs[0])<0) y_error("FILENAME must be specified");
   char *filename = ygets_q(iarg);
 
   // params vector (optional)
-  long *params = 0;
-  if (piargs[1]>=0) {
+  if (yav_arg_set(iarg=piargs[1])) {
     long ntot ;
     long dims[Y_DIMSIZE]={0,0};
-    params = ygeta_l(argc-2, &ntot, dims);
+    params = ygeta_l(iarg, &ntot, dims);
     if (dims[0]!=1 || dims[1]!=4)
       y_error("bad dimensions  for PARAMS vector");
     if (params[0]<0 || params[1]<0 || params[2]<0)
       y_error("bad values in PARAMS vector");
   }
 
-  // vcodec keyword
-  char* vcodec = NULL;
-  if (!yarg_nil(iarg=kiargs[0])) {
-    vcodec = ygets_q(iarg);
-  }
+  // INTERPRET KEYWORD ARGUMENTS
+  char* vcodec = NULL, *pix_fmt = NULL;
+  int k=0;
+  if (yav_arg_set(iarg=kiargs[k++])) vcodec  = ygets_q(iarg); // vcodec
+  if (yav_arg_set(iarg=kiargs[k++])) pix_fmt = ygets_q(iarg); // pix_fmt
+  if (yav_arg_set(iarg=kiargs[k++])) params[0] = ygets_l(iarg); // b
+  if (yav_arg_set(iarg=kiargs[k++])) params[1] = ygets_l(iarg); // r
+  if (yav_arg_set(iarg=kiargs[k++])) params[2] = ygets_l(iarg); // g
+  if (yav_arg_set(iarg=kiargs[k++])) params[3] = ygets_l(iarg); // bf
 
   // PUSH RETURN VALUE
   yav_ctxt * obj = ypush_av();
@@ -206,28 +215,22 @@ Y_av_create(int argc)
     if (c->codec_id == CODEC_ID_NONE) c->codec_id = obj->codec->id;
 
     /* put sample parameters */
-    c->bit_rate = (params && params[0])? params[0] : YAV_BIT_RATE;
-    /* resolution must be a multiple of two */
-    c->width = 0;
-    c->height = 0;
-    /* time base: this is the fundamental unit of time (in seconds) in terms
-       of which frame timestamps are represented. for fixed-fps content,
-       timebase should be 1/framerate and timestamp increments should be
-       identically 1. */
-    c->time_base.den = (params && params[1])? params[1] : YAV_FRAME_RATE;
-    c->time_base.num = 1;
-    c->gop_size = (params && params[2])? params[2] : YAV_GOP_SIZE;
-    c->pix_fmt = YAV_PIX_FMT; 
-    c->max_b_frames = (params && params[3]>=0)? params[3] : YAV_MAX_B_FRAMES;
+    c->width   = 0;
+    c->height  = 0;
+    c->pix_fmt = pix_fmt ? av_get_pix_fmt(pix_fmt) : YAV_PIX_FMT; 
+    c->bit_rate      =  params[0]     ? params[0] : YAV_BIT_RATE;
+    c->time_base.den =  params[1]     ? params[1] : YAV_FRAME_RATE;
+    c->time_base.num =  1;
+    c->gop_size      =  params[2]     ? params[2] : YAV_GOP_SIZE;
+    c->max_b_frames  = (params[3]>=0) ? params[3] : YAV_MAX_B_FRAMES;
     if(obj->oc->oformat->flags & AVFMT_GLOBALHEADER)
         c->flags |= CODEC_FLAG_GLOBAL_HEADER;
-
 
     // codec-specific limitations
     switch (c->codec_id) {
     case CODEC_ID_RAWVIDEO:
     case CODEC_ID_GIF:
-      c->pix_fmt = PIX_FMT_RGB24;
+      if (!pix_fmt) c->pix_fmt = PIX_FMT_RGB24;
       break;
     case CODEC_ID_MSMPEG4V3:
     case CODEC_ID_H263:
@@ -241,25 +244,12 @@ Y_av_create(int argc)
       break;
     default:;
     }
-
-
   }
 
-  /*
-    if (obj->oc->oformat->audio_codec != CODEC_ID_NONE) {
-    audio_st = add_audio_stream(obj->oc, obj->oc->oformat->audio_codec);
-    }
-   */
-    if (!(obj->oc->oformat->flags & AVFMT_RAWPICTURE)) {
-        /* allocate output buffer */
-        /* XXX: API change will be done */
-        /* buffers passed into lav* can be allocated any way you prefer,
-           as long as they're aligned enough for the architecture, and
-           they're freed appropriately (such as using av_free for buffers
-           allocated with av_malloc) */
-        obj->video_outbuf_size = 200000;
-        obj->video_outbuf = av_malloc(obj->video_outbuf_size);
-    }
+  if (!(obj->oc->oformat->flags & AVFMT_RAWPICTURE)) {
+    obj->video_outbuf_size = 200000;
+    obj->video_outbuf = av_malloc(obj->video_outbuf_size);
+  }
 
 }
 
@@ -268,24 +258,17 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
   obj->video_st->codec->height=height;
   av_dump_format(obj->oc, 0, obj->oc->filename, 1);
 
-  /* now that all the parameters are set, we can open the audio and
-     video codecs and allocate the necessary encode buffers */
   if (obj->video_st) {
     AVCodecContext *c;
-
     c = obj->video_st->codec;
 
-    /* open the codec */
-    if (avcodec_open2(c, obj->codec, NULL) < 0) {
-        y_error("could not open codec\n");
-    }
+    if (avcodec_open2(c, obj->codec, NULL) < 0)
+      y_error("could not open codec\n");
 
-
-    /* allocate the encoded raw picture */
     obj->picture = avcodec_alloc_frame();
-    if (!obj->picture) {
+    if (!obj->picture)
       y_error("Could not allocate picture");
-    }
+
     int size = avpicture_get_size(c->pix_fmt, c->width, c->height);
     uint8_t *picture_buf = av_malloc(size);
     if (!picture_buf) {
@@ -316,19 +299,14 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
       avpicture_fill((AVPicture *)obj->tmp_picture, tmp_picture_buf,
 		     PIX_FMT_RGB24, c->width, c->height);
     }
-
   }
-  /*
-    if (audio_st)
-    open_audio(oc, audio_st);
-   */
 
   /* open the output file, if needed */
-  if (!(obj->oc->oformat->flags & AVFMT_NOFILE)) {
-    if (avio_open(&obj->oc->pb, obj->oc->filename, AVIO_FLAG_WRITE) < 0) {
+  if (!(obj->oc->oformat->flags & AVFMT_NOFILE))
+    if (avio_open(&obj->oc->pb, obj->oc->filename, AVIO_FLAG_WRITE) < 0)
       y_errorq("Could not open '%s'", obj->oc->filename);
-    }
-  }
+
+  obj->open = 1;
 
   /* write the stream header, if any */
   avformat_write_header(obj->oc, NULL);
@@ -386,14 +364,14 @@ Y_av_write(int argc)
 
     av_image_copy(obj->tmp_picture->data, obj->tmp_picture->linesize,
     		  src, src_linesizes, PIX_FMT_RGB24, c->width, c->height);
-    sws_scale(obj->img_convert_ctx, (const uint8_t * const*)obj->tmp_picture->data,
+    sws_scale(obj->img_convert_ctx,
+	      (const uint8_t * const*)obj->tmp_picture->data,
 	      obj->tmp_picture->linesize,
 	      0, c->height, obj->picture->data, obj->picture->linesize);
   } else {
     av_image_copy(obj->picture->data, obj->picture->linesize,
 		  src, src_linesizes, PIX_FMT_RGB24, c->width, c->height);
   }
-
 
   /* encode the image */
   if (obj->oc->oformat->flags & AVFMT_RAWPICTURE)
