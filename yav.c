@@ -158,7 +158,7 @@ Y_av_create(int argc)
 
   // vcodec keyword
   char* vcodec = NULL;
-  if ((iarg=kiargs[0])>=0) {
+  if (!yarg_nil(iarg=kiargs[0])) {
     vcodec = ygets_q(iarg);
   }
 
