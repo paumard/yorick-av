@@ -134,7 +134,7 @@ func av_close(&obj)
 
 
 func av_movie(filename, draw_frame,time_limit,min_interframe,bracket_time,
-              params=)
+              params=, vcodec=)
 /* DOCUMENT av_movie, filename, draw_frame
  *       or av_movie, filename, draw_frame, time_limit
  *       or av_movie, filename, draw_frame, time_limit, min_interframe
@@ -144,15 +144,15 @@ func av_movie(filename, draw_frame,time_limit,min_interframe,bracket_time,
  * libav.i.
  *
  * KEYWORDS:
- * The PARAMS argument of av_create can be passed as a keyword
- * (params=...)
+ *  params: the PARAMS argument for av_create
+ *  vcodec: same as for av_create
  *
  * SEE ALSO: movie, av_create
  */
 {
   require, "movie.i";
   if (is_void(params)) params=[0, 0, 16, 2];
-  _av_movie_encoder = av_create(filename, params);
+  _av_movie_encoder = av_create(filename, params, vcodec=vcodec);
   fma = _av_movie_fma;
   _av_movie_count = 0;
   return movie(draw_frame, time_limit, min_interframe, bracket_time);
