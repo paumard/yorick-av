@@ -64,13 +64,12 @@ typedef struct yav_ctxt {
   AVFormatContext *oc;
   AVStream *audio_st, *video_st;
   struct SwsContext *img_convert_ctx;
-
+  AVCodec *codec;
 } yav_ctxt;
 void yav_free(void*obj);
 static y_userobj_t yav_ops = {"LibAV object", &yav_free, 0, 0, 0, 0};
 
 void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height);
-void yav_h264preset(AVCodecContext *ctx);
 
 yav_ctxt *ypush_av()
 {
@@ -83,6 +82,7 @@ yav_ctxt *ypush_av()
   obj->oc=0;
   obj->video_st=0;
   obj->img_convert_ctx = 0;
+  obj->codec=0;
   //  audio_st=0;
 }
 
@@ -131,7 +131,6 @@ Y_av_create(int argc)
 
   yarg_kw_init(knames, kglobs, kiargs);
   int iarg=argc-1, parg=0;
-  y_warn("parsing arguments");
   while (iarg>=0) {
     iarg = yarg_kw(iarg, kglobs, kiargs);
     if (iarg>=0) {
@@ -193,11 +192,18 @@ Y_av_create(int argc)
     obj->video_st = avformat_new_stream(obj->oc, NULL);
     c = obj->video_st->codec;
     if (vcodec) {
-      AVCodec *codec = avcodec_find_encoder_by_name(vcodec);
-      if (!codec) y_error("can't find requested codec");
-      c->codec_id = codec->id;
-    } else c->codec_id = obj->oc->oformat->video_codec;
+      obj->codec = avcodec_find_encoder_by_name(vcodec);
+      if (!obj->codec) y_error("can't find requested codec");
+      c->codec_id = obj->codec->id;
+    } else {
+      c->codec_id = obj->oc->oformat->video_codec;
+      obj->codec = avcodec_find_encoder(c->codec_id);
+      if (!obj->codec) y_error("default codec not found");
+    }
     c->codec_type = AVMEDIA_TYPE_VIDEO;
+
+    avcodec_get_context_defaults3(c, obj->codec);
+    if (c->codec_id == CODEC_ID_NONE) c->codec_id = obj->codec->id;
 
     /* put sample parameters */
     c->bit_rate = (params && params[0])? params[0] : YAV_BIT_RATE;
@@ -211,7 +217,7 @@ Y_av_create(int argc)
     c->time_base.den = (params && params[1])? params[1] : YAV_FRAME_RATE;
     c->time_base.num = 1;
     c->gop_size = (params && params[2])? params[2] : YAV_GOP_SIZE;
-    c->pix_fmt = YAV_PIX_FMT;
+    c->pix_fmt = YAV_PIX_FMT; 
     c->max_b_frames = (params && params[3]>=0)? params[3] : YAV_MAX_B_FRAMES;
     if(obj->oc->oformat->flags & AVFMT_GLOBALHEADER)
         c->flags |= CODEC_FLAG_GLOBAL_HEADER;
@@ -229,14 +235,9 @@ Y_av_create(int argc)
     case CODEC_ID_RV10:
     case CODEC_ID_RV20:
     case CODEC_ID_FLV1:
+    case CODEC_ID_ASV1:
+    case CODEC_ID_ASV2:
       c->max_b_frames = 0;
-      break;
-    case CODEC_ID_H264:
-      yav_h264preset(c);
-      if (params && params[0])     c->bit_rate      = params[0];
-      if (params && params[1])     c->time_base.den = params[1];
-      if (params && params[2])     c->gop_size      = params[2];
-      if (params && params[3]>=0)  c->max_b_frames  = params[3];
       break;
     default:;
     }
@@ -262,56 +263,6 @@ Y_av_create(int argc)
 
 }
 
-void yav_h264preset(AVCodecContext *ctx) {
-  //      av_opt_set( c->priv_data, "preset" , "fast",  0);
-  ctx->bit_rate = 500*1000;
-  ctx->bit_rate_tolerance = 0;
-  ctx->rc_max_rate = 0;
-  ctx->rc_buffer_size = 0;
-  ctx->gop_size = 40;
-  ctx->max_b_frames = 3;
-  ctx->b_frame_strategy = 1;
-  ctx->coder_type = 1;
-  ctx->me_cmp = 1;
-  ctx->me_range = 16;
-  ctx->qmin = 10;
-  ctx->qmax = 51;
-  ctx->scenechange_threshold = 40;
-  ctx->flags |= CODEC_FLAG_LOOP_FILTER;
-  ctx->me_method = ME_HEX;
-  ctx->me_subpel_quality = 5;
-  ctx->i_quant_factor = 0.71;
-  ctx->qcompress = 0.6;
-  ctx->max_qdiff = 4;
-  ctx->directpred = 1;
-  ctx->flags2 |= CODEC_FLAG2_FASTPSKIP;
-/*
-  // libx264-medium.ffpreset preset
-  ctx->coder_type = 1;  // coder = 1
-  ctx->flags|=CODEC_FLAG_LOOP_FILTER;   // flags=+loop
-  ctx->me_cmp|= 1;  // cmp=+chroma, where CHROMA = 1
-  ctx->partitions|=X264_PART_I8X8+X264_PART_I4X4+X264_PART_P8X8+X264_PART_B8X8; // partitions=+parti8x8+parti4x4+partp8x8+partb8x8
-  ctx->me_method=ME_HEX;    // me_method=hex
-  ctx->me_subpel_quality = 7;   // subq=7
-  ctx->me_range = 16;   // me_range=16
-  ctx->gop_size = 250;  // g=250
-  ctx->keyint_min = 25; // keyint_min=25
-  ctx->scenechange_threshold = 40;  // sc_threshold=40
-  ctx->i_quant_factor = 0.71; // i_qfactor=0.71
-  ctx->b_frame_strategy = 1;  // b_strategy=1
-  ctx->qcompress = 0.6; // qcomp=0.6
-  ctx->qmin = 10;   // qmin=10
-  ctx->qmax = 51;   // qmax=51
-  ctx->max_qdiff = 4;   // qdiff=4
-  ctx->max_b_frames = 3;    // bf=3
-  ctx->refs = 3;    // refs=3
-  ctx->directpred = 1;  // directpred=1
-  ctx->trellis = 1; // trellis=1
-  ctx->flags2|=CODEC_FLAG2_BPYRAMID+CODEC_FLAG2_MIXED_REFS+CODEC_FLAG2_WPRED+CODEC_FLAG2_8X8DCT+CODEC_FLAG2_FASTPSKIP;  // flags2=+bpyramid+mixed_refs+wpred+dct8x8+fastpskip
-  ctx->weighted_p_pred = 2; // wpredp=2
-*/
-}
-
 void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
   obj->video_st->codec->width=width;
   obj->video_st->codec->height=height;
@@ -320,20 +271,12 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
   /* now that all the parameters are set, we can open the audio and
      video codecs and allocate the necessary encode buffers */
   if (obj->video_st) {
-    AVCodec *codec;
     AVCodecContext *c;
 
     c = obj->video_st->codec;
 
-    /* find the video encoder */
-    codec = avcodec_find_encoder(c->codec_id);
-    if (!codec) {
-        y_error("codec not found");
-    }
-
-
     /* open the codec */
-    if (avcodec_open2(c, codec, NULL) < 0) {
+    if (avcodec_open2(c, obj->codec, NULL) < 0) {
         y_error("could not open codec\n");
     }
 
