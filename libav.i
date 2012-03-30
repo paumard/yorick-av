@@ -59,25 +59,21 @@ extern av_create;
  * Frames can then be added to the movie using av_write and the file
  * is closed using av_close.
  *
- * 4 parameters can be provided using the PARAMS argument:
- *    PARAMS = [bit_rate, frame_rate, gop_size, max_b_frames]
- *    defaults:  400000       25         10         1
-
- * See LibAV's documentation (for intance in "man avconv") for their
- * precise meaning. fram_rate is simply the number of frames per
- * second, so it selectssets the speed at which the frames stored
- * using av_write will be displayed. frame_rate, gop_size and
- * max_b_frames allow tuning between compression an
- * quality. max_b_frames is ignored for the MSMPEG4V3 (DivX ;-) codec
- * (file extension: wmv).
- *
- * If PARAMS is set, you can still get the default value for any field
- * by setting it to 0, except max_b_frames, for which 0 is a legit
- * value and which should be set to a negative value to get the default.
+ * For compatibility with mpeg_create, 4 parameters can be specified
+ * as one positional argument:
+ *    PARAMS = [b, r, g, bf]
  *
  * KEYWORDS
- *  vcodec: string naming a specific video codec. If not specified,
- *          the default for FILENAME's extension will be used.
+ * av_create accepts a few keywords corresponding to eponymous
+ * options in avconv/ffmpeg, see "avconv -h" or "ffmpeg -h".
+ *  vcodec:  string naming a specific video codec. If not specified,
+ *           the default for FILENAME's extension will be used.
+ *  pix_fmt: output pixel format, e.g. "rgb24", "yuv420p"... see
+ *           avconv -pix_fmts
+ *  b:       bit rate.   Default: 400000
+ *  r:       frame rate. Default: 25
+ *  g:       group of picture (a.k.a. gop) size. Default: 25
+ *  bf:      max number of consecutive B frames. Default: 16.
  *
  * SEE ALSO: av_write, av_close, av_movie
  */
@@ -134,7 +130,7 @@ func av_close(&obj)
 
 
 func av_movie(filename, draw_frame,time_limit,min_interframe,bracket_time,
-              params=, vcodec=)
+              params=, vcodec=, pix_fmt=, b=, r=, g=, bf=)
 /* DOCUMENT av_movie, filename, draw_frame
  *       or av_movie, filename, draw_frame, time_limit
  *       or av_movie, filename, draw_frame, time_limit, min_interframe
@@ -143,16 +139,17 @@ func av_movie(filename, draw_frame,time_limit,min_interframe,bracket_time,
  * animation to file FILENAME using the av_* family of functions from
  * libav.i.
  *
- * KEYWORDS:
- *  params: the PARAMS argument for av_create
- *  vcodec: same as for av_create
+ * KEYWORDS
+ *  av_movie accepts the same keywords as av_create. In addition,
+ *  av_create's PARAM argument can be passed as a keyword to av_movie.
  *
  * SEE ALSO: movie, av_create
  */
 {
   require, "movie.i";
   if (is_void(params)) params=[0, 0, 16, 2];
-  _av_movie_encoder = av_create(filename, params, vcodec=vcodec);
+  _av_movie_encoder = av_create(filename, params, vcodec=vcodec,
+                                pix_fmt=pix_fmt, b=b, r=r, g=g, bf=bf);
   fma = _av_movie_fma;
   _av_movie_count = 0;
   return movie(draw_frame, time_limit, min_interframe, bracket_time);
