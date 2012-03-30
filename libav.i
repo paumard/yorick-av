@@ -75,6 +75,10 @@ extern av_create;
  * by setting it to 0, except max_b_frames, for which 0 is a legit
  * value and which should be set to a negative value to get the default.
  *
+ * KEYWORDS
+ *  vcodec: string naming a specific video codec. If not specified,
+ *          the default for FILENAME's extension will be used.
+ *
  * SEE ALSO: av_write, av_close, av_movie
  */
 
