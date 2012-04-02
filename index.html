@@ -1,0 +1,158 @@
+---
+layout: default
+headline: make movies from Yorick in various formats using FFmpeg / LibAV
+---
+<p>yorick-av: make movies from Yorick in various formats using FFmpeg / LibAV</p>
+<p class="sectop">Package libav (in libav.i) - </p>
+<p class="sectop">Index of documented functions or symbols:</p>
+<div class="ndex0s">
+  <div class="ndex1">
+    <h3>A</h3>
+    <p><a href="index.html#av_close">av_close</a></p>
+    <p><a href="index.html#av_codec_opt_set">av_codec_opt_set</a></p>
+  </div>
+  <div class="ndex2">
+    <p><a href="index.html#av_create">av_create</a></p>
+    <p><a href="index.html#av_movie">av_movie</a></p>
+    <p><a href="index.html#av_write">av_write</a></p>
+  </div>
+  <div class="ndex3">
+    <h3>L</h3>
+    <p><a href="index.html#libav">libav</a></p>
+  </div>
+</div>
+<div class="docblock"><a name="av_close"></a><h3>av_close</h3>
+  <pre>DOCUMENT av_close, encoder
+
+Close ENCODER, a LibAV encoder object previously created using
+av_write. Currently, it merely destroys the object but it should
+still be used for forward compatibility.
+
+Destroying the last reference to ENCODER writes the last, buffered
+frames in the file and writes whatever trailer is required by the
+video codec or container file format.
+</pre>
+  <p>SEE ALSO: <a href="index.html#av_create">av_create</a>, <a href="index.html#av_write">av_write</a>, <a href="index.html#av_movie">av_movie</a></p>
+</div>
+<div class="docblock"><a name="av_codec_opt_set"></a><h3>av_codec_opt_set</h3>
+  <pre>DOCUMENT av_codec_opt_set, encoder, parname, value
+
+Experimental, has never been shown to work.
+
+Set parameter PARNAME to VALUE (both strings) in the codec stored
+in ENCODER.
+</pre>
+  <p>SEE ALSO: <a href="index.html#av_create">av_create</a>, <a href="index.html#av_write">av_write</a>, <a href="index.html#av_close">av_close</a>, <a href="index.html#av_movie">av_movie</a></p>
+</div>
+<div class="docblock"><a name="av_create"></a><h3>av_create</h3>
+  <pre>DOCUMENT encoder = av_create(filename)
+      or encoder = av_create(filename, params)
+
+Create a LibAV encoder object to write a movie to disk. The type of
+file container is determine by FILENAME's extension (e.g. ogg, mpg,
+avi, mkv, mov, wmv, h264). The video codec is LibAV's default for
+that container.
+
+Frames can then be added to the movie using av_write and the file
+is closed using av_close.
+
+For compatibility with mpeg_create, 4 parameters can be specified
+as one positional argument:
+   PARAMS = [b, r, g, bf]
+
+KEYWORDS
+av_create accepts a few keywords corresponding to eponymous
+options in avconv/ffmpeg, see "avconv -h" or "ffmpeg -h".
+ vcodec:  string naming a specific video codec. If not specified,
+          the default for FILENAME's extension will be used.
+ pix_fmt: output pixel format, e.g. "rgb24", "yuv420p"... see
+          avconv -pix_fmts
+ b:       bit rate.   Default: 400000
+ r:       frame rate. Default: 25
+ g:       group of picture (a.k.a. gop) size. Default: 25
+ bf:      max number of consecutive B frames. Default: 16.
+</pre>
+  <p>SEE ALSO: <a href="index.html#av_write">av_write</a>, <a href="index.html#av_close">av_close</a>, <a href="index.html#av_movie">av_movie</a></p>
+</div>
+<div class="docblock"><a name="av_movie"></a><h3>av_movie</h3>
+  <pre>DOCUMENT av_movie, filename, draw_frame
+      or av_movie, filename, draw_frame, time_limit
+      or av_movie, filename, draw_frame, time_limit, min_interframe
+
+A wrapper around the movie function in movie.i, which writes the
+animation to file FILENAME using the av_* family of functions from
+libav.i.
+
+KEYWORDS
+ av_movie accepts the same keywords as av_create. In addition,
+ av_create's PARAM argument can be passed as a keyword to av_movie.
+</pre>
+  <p>SEE ALSO: movie, <a href="index.html#av_create">av_create</a></p>
+</div>
+<div class="docblock"><a name="av_write"></a><h3>av_write</h3>
+  <pre>DOCUMENT av_write, encoder, rgb
+
+Write the frame RGB to movie file using ENCODER, an LibAV encoder
+object created using av_create.
+
+RGB must be a 3xWIDTHxHEIGHT array of char and every frame must
+have the same WIDTH and HEIGHT. Certain codecs may have specific
+requirements on WIDTH and HEIGHT. In particular, they must be even
+numbers in all(?) cases, and using mutliples of 8 helps.
+
+Beware that movie frames are stored in top-to-bottom order. RGB
+should be flipped vertically if pli displays it correctly:
+   rbg = rgb(,,::-1)
+
+Once all frames have been fed to the ENCODER, close the movie using
+av_close.
+</pre>
+  <p>SEE ALSO: <a href="index.html#av_create">av_create</a>, <a href="index.html#av_close">av_close</a>, <a href="index.html#av_movie">av_movie</a></p>
+</div>
+<div class="docblock"><a name="libav"></a><h3>libav</h3>
+  <pre>DOCUMENT #include "libav.i"
+ 
+This is yorick-av, a Yorick plug-ing to write movies using
+LibAV/FFmpeg.
+
+This plug-in uses the LibAV / FFmpeg family of libraries
+(libavformat, libavcodec, libavutils, libswscale...) to write
+movies from within Yorick.
+
+In essence, it is a compatible rewrite of the yompeg plug-in, but
+instead of shipping its own, trimmed-down version of FFmpeg, libav
+uses the full-featured LibAV (or FFmpeg). This allows using more
+recent codecs than MPEG1, such as h.264, MP4 / DivX, ogg/vorbis
+(Theora). yorick-av can write in about any format supported by
+LibAV: mpeg, mp4, avi, mov, ogg, mkv.
+
+libav-mpeg.i provides a drop-in replacement for mpeg.i
+avtest.i contains a limited test suite
+
+COPYRIGHT AND LICENSE INFORMATION
+The C code is based on the famous FFmpeg example file
+example-output.c by Fabrice Bellard
+
+Copyright (c) 2003 Fabrice Bellard (for yav.c)
+Copyright (c) 2012 Thibaut Paumard (for yav.c, *libav*.i)
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
+THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+</pre>
+  <p>SEE ALSO: <a href="index.html#av_create">av_create</a>, <a href="index.html#av_write">av_write</a>, <a href="index.html#av_close">av_close</a>, <a href="index.html#av_movie">av_movie</a>, avtest</p>
+</div>
