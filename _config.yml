@@ -1,6 +1,6 @@
 prefix: "http://dhmunro.github.com/yorick-doc"
 pkgname: "yorick-av"
-pkgtitle: "make movies from Yorick in various formats using FFmpeg / LibAV"
+pkgtitle: "make movies in various formats using FFmpeg / LibAV"
 
 keywords: yorick, documentation, manual
 description: Yorick Documentation
