@@ -1,3 +1,14 @@
+yorick-av (0.0.1-2) UNRELEASED; urgency=low
+
+  * Move to maintenance to the debian-science team. Update debian/control
+    to comply with their policy:
+    + change Maintainer, put self in Uploaders;
+    + DM-Upload-Allowed: yes;
+    + fill-in Vcs-* fields;
+    + Priority is extra.
+
+ -- Thibaut Paumard <paumard@users.sourceforge.net>  Tue, 19 Jun 2012 17:51:07 +0200
+
 yorick-av (0.0.1-1) unstable; urgency=low
 
   * Initial Release. Closes: #666498
