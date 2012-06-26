@@ -1,4 +1,4 @@
-yorick-av (0.0.1-2) UNRELEASED; urgency=low
+yorick-av (0.0.1-2) unstable; urgency=low
 
   * Move to maintenance to the debian-science team. Update debian/control
     to comply with their policy:
@@ -6,8 +6,10 @@ yorick-av (0.0.1-2) UNRELEASED; urgency=low
     + DM-Upload-Allowed: yes;
     + fill-in Vcs-* fields;
     + Priority is extra.
+  * Fix machine-readable copyright format.
+  * Add lintian override about no fortified functions.
 
- -- Thibaut Paumard <paumard@users.sourceforge.net>  Tue, 19 Jun 2012 17:51:07 +0200
+ -- Thibaut Paumard <paumard@users.sourceforge.net>  Tue, 26 Jun 2012 14:04:00 +0200
 
 yorick-av (0.0.1-1) unstable; urgency=low
 

@@ -4,7 +4,7 @@ Source: https://github.com/paumard/yorick-av
 
 Files: *
 Copyright: (c) 2003 Fabrice Bellard
-Copyright: (c) 2012 Thibaut Paumard
+           (c) 2012 Thibaut Paumard
 License: permissive
  Permission is hereby granted, free of charge, to any person obtaining
  a copy of this software and associated documentation files (the

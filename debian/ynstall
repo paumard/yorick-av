@@ -1,2 +1,3 @@
 yorick-av.packinfo
 yorick-av.keywords
+debian/lintian-overrides.d/yorick-av usr/share/lintian/overrides

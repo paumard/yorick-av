@@ -1,0 +1,2 @@
+# no potentially unfortified functions called by any routines
+yorick-av: hardening-no-fortify-functions usr/lib/yorick/lib/yav.so
