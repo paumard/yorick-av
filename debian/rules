@@ -7,5 +7,13 @@ export YAV_NODISPLAY := nodisplay
 %:
 	dh $@
 
+override_dh_auto_build:
+	$(MAKE) COPT_DEFAULT="" \
+		Y_CFLAGS="$(CFLAGS) $(CPPFLAGS)" \
+		Y_LDFLAGS="$(LDFLAGS)"
+
 override_dh_auto_install-arch:
 	dh_installyorick
+
+override_dh_auto_clean:
+	$(MAKE) Y_MAKEDIR=/usr/lib/yorick Y_EXE=/usr/bin/yorick distclean

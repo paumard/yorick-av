@@ -3,7 +3,7 @@ Section: science
 Priority: extra
 Maintainer: Debian Science Maintainers <debian-science-maintainers@lists.alioth.debian.org>
 Uploaders: Thibaut Paumard <paumard@users.sourceforge.net>
-Build-Depends: debhelper (>= 7.0.50~), yorick-dev (>= 2),
+Build-Depends: debhelper (>= 9), yorick-dev (>= 2),
 	       libavformat-dev (>=4:0.8), libavutil-dev (>=4:0.8),
 	       libavcodec-dev (>=4:0.8), libswscale-dev (>=4:0.8)
 Standards-Version: 3.9.3.0

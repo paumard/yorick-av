@@ -8,6 +8,7 @@ yorick-av (0.0.1-2) unstable; urgency=low
     + Priority is extra.
   * Fix machine-readable copyright format.
   * Add lintian override about no fortified functions.
+  * Fortify (don't rely on yorick to pass the right build flags)
 
  -- Thibaut Paumard <paumard@users.sourceforge.net>  Tue, 26 Jun 2012 14:04:00 +0200
 
