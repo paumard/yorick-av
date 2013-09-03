@@ -1,0 +1,29 @@
+Description: Avoid using libx264 in check file
+ yav does not know yet how to reliably use libx264. It sometimes
+ works, it sometimes fail. Don't let it happen at build time.
+Author: Thibaut Paumard <paumard@users.sourceforge.net>
+Origin: vendor
+Bug-Debian: http://bugs.debian.org/721037
+Forwarded: not-needed
+Last-Update: 2013-09-03
+
+--- a/check.i
++++ b/check.i
+@@ -47,14 +47,15 @@
+ if (open("libav.i", "r", 1)) plug_dir, _("./", plug_dir());
+ #include "libav.i"
+ 
+-exts=["mpg", "avi", "ogg", "mkv", "mp4", "mov", "h264", "wmv", "vob"];
++exts=["mpg", "avi", "ogg", "mkv", "mp4", "mov", "wmv", "vob"];
++vcodec=["mpeg1video", "mpeg4", "libtheora", "libtheora", "mpeg4", "mpeg4", "mpeg4", "mpeg2video"];
+ 
+ for (e=1; e<=numberof(exts); ++e) {
+   fname="libavcheck."+exts(e);
+   write, format="==========================================\n"+
+                 "     testing extension: '%s'\n"+
+                 "==========================================\n", exts(e);
+-  obj=av_create(fname);
++  obj=av_create(fname, vcodec=vcodec(e));
+ 
+   data = array(char, 3, 704, 288);
+ 

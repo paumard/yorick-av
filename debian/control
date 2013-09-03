@@ -2,14 +2,13 @@ Source: yorick-av
 Section: science
 Priority: extra
 Maintainer: Debian Science Maintainers <debian-science-maintainers@lists.alioth.debian.org>
-Uploaders: Thibaut Paumard <paumard@users.sourceforge.net>
+Uploaders: Thibaut Paumard <thibaut@debian.org>
 Build-Depends: debhelper (>= 9), yorick-dev (>= 2),
 	       libavformat-dev (>=4:0.8), libavutil-dev (>=4:0.8),
 	       libavcodec-dev (>=4:0.8), libswscale-dev (>=4:0.8)
-Standards-Version: 3.9.3.0
-DM-Upload-Allowed: yes
-Vcs-Git: git://git.debian.org/git/debian-science/packages/yorick-av.git
-Vcs-Browser: http://git.debian.org/?p=debian-science/packages/yorick-av.git
+Standards-Version: 3.9.4
+Vcs-Git: git://anonscm.debian.org/debian-science/packages/yorick-av.git
+Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-science/packages/yorick-av.git
 Homepage: http://github.com/paumard/yorick-av
 
 Package: yorick-av
