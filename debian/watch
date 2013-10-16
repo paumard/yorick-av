@@ -1,2 +1,3 @@
 version=3
-http://thibaut.paumard.free.fr/src/yorick-av_(.*)\.tar.xz
+opts=filenamemangle=s/.+\/v?(.*)\.tar\.gz/yorick-av-$1.tar.gz/ \
+  https://github.com/paumard/yorick-av/tags .*/v?(\d[\d\.]+)\.tar\.gz
