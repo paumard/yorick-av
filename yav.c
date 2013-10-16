@@ -5,7 +5,7 @@
  * example-output.c by Fabrice Bellard and keeps its license.
  *
  * Copyright (c) 2003 Fabrice Bellard
- * Copyright (c) 2012 Thibaut Paumard
+ * Copyright (c) 2012-2013 Thibaut Paumard
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -87,6 +87,7 @@ yav_ctxt *ypush_av()
   obj->codec=0;
   obj->open=0;
   //  audio_st=0;
+  return obj;
 }
 
 void yav_free(void*obj_) {
@@ -380,10 +381,42 @@ Y_av_write(int argc)
   if (obj->oc->oformat->video_codec == CODEC_ID_H264 ||
       obj->oc->oformat->video_codec == CODEC_ID_THEORA) ++obj->picture->pts;
 
+  int ret=0;
+
+#if (LIBAVCODEC_VERSION_MAJOR > 53)
+  if (obj->oc->oformat->flags & AVFMT_RAWPICTURE) {
+    /* Raw video case - directly store the picture in the packet */
+    AVPacket pkt;
+    av_init_packet(&pkt);
+    pkt.flags |= AV_PKT_FLAG_KEY;
+    pkt.stream_index = obj->video_st->index;
+    pkt.data= obj->video_outbuf;
+    // pkt.size= out_size;
+    //    pkt.data = dst_picture.data[0];
+    pkt.size = sizeof(AVPicture);
+    ret = av_interleaved_write_frame(obj->oc, &pkt);
+  } else {
+    AVPacket pkt = { 0 };
+    int got_packet;
+    av_init_packet(&pkt);
+    /* encode the image */
+    ret = avcodec_encode_video2(c, &pkt, obj->picture, &got_packet);
+    if (ret < 0) {
+      y_errorn("Error encoding video frame: %d", ret);
+    }
+    /* If size is zero, it means the image was buffered. */
+    if (!ret && got_packet && pkt.size) {
+      pkt.stream_index = obj->video_st->index;
+      /* Write the compressed frame to the media file. */
+      ret = av_interleaved_write_frame(obj->oc, &pkt);
+    } else {
+      ret = 0;
+    }
+  }
+#else
   int out_size
     = avcodec_encode_video(c, obj->video_outbuf, obj->video_outbuf_size,
 			   obj->picture);
-  int ret = 0;
   /* if zero size, it means the image was buffered */
   if (out_size > 0) {
     AVPacket pkt;
@@ -391,7 +424,7 @@ Y_av_write(int argc)
 
     if (c->coded_frame->pts != AV_NOPTS_VALUE)
       pkt.pts= av_rescale_q(c->coded_frame->pts, c->time_base,
-			    obj->video_st->time_base);
+  			    obj->video_st->time_base);
     if(c->coded_frame->key_frame)
       pkt.flags |= AV_PKT_FLAG_KEY;
     pkt.stream_index= obj->video_st->index;
@@ -400,6 +433,7 @@ Y_av_write(int argc)
     /* write the compressed frame in the media file */
     ret = av_interleaved_write_frame(obj->oc, &pkt);
   }
+#endif
 
   if (ret != 0)
     y_errorn("Error while writing video frame: %d", ret);

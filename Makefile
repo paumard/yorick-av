@@ -63,6 +63,9 @@ include $(Y_MAKEDIR)/Make$(TGT)
 
 # configure script for this package may produce make macros:
 # include output-makefile-from-package-configure
+# Y_HOME and Y_SITE in Make.cfg may not be correct (e.g.- relocatable)
+Y_HOME=$(Y_EXE_HOME)
+Y_SITE=$(Y_EXE_SITE)
 
 # reduce chance of yorick-1.5 corrupting this Makefile
 MAKE_TEMPLATE = protect-against-1.5

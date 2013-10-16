@@ -4,7 +4,7 @@
  * using LibAV/FFmpeg.
  *
  * ============================================================================
- * Copyright (c) 2012 Thibaut Paumard
+ * Copyright (c) 2012-2013 Thibaut Paumard
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -47,14 +47,15 @@
 if (open("libav.i", "r", 1)) plug_dir, _("./", plug_dir());
 #include "libav.i"
 
-exts=["mpg", "avi", "ogg", "mkv", "mp4", "mov", "h264", "wmv", "vob"];
-
+exts=["mpg", "avi", "ogg", "mkv", "mp4", "mov", "wmv", "vob"];
+vcodec=["mpeg1video", "mpeg4", "libtheora", "libtheora", "mpeg4", "mpeg4", "mpeg4", "mpeg2video"];
+ 
 for (e=1; e<=numberof(exts); ++e) {
   fname="libavcheck."+exts(e);
   write, format="==========================================\n"+
                 "     testing extension: '%s'\n"+
                 "==========================================\n", exts(e);
-  obj=av_create(fname);
+  obj=av_create(fname, vcodec=vcodec(e));
 
   data = array(char, 3, 704, 288);
 
@@ -72,7 +73,7 @@ for (e=1; e<=numberof(exts); ++e) {
 if (!get_env("YAV_NODISPLAY")) {
 
   require, "avtest.i";
-  for (e=1; e<=numberof(exts); ++e) avtest, "libavtest."+exts(e);
+  for (e=1; e<=numberof(exts); ++e) avtest, "libavtest."+exts(e), vcodec=vcodec(e);
 
   include,"mpgtest.i", 3;
   require, "libav-mpeg.i";
