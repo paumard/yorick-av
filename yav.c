@@ -5,7 +5,7 @@
  * example-output.c by Fabrice Bellard and keeps its license.
  *
  * Copyright (c) 2003 Fabrice Bellard
- * Copyright (c) 2012 Thibaut Paumard
+ * Copyright (c) 2012-2013 Thibaut Paumard
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
