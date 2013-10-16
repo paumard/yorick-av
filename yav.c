@@ -87,6 +87,7 @@ yav_ctxt *ypush_av()
   obj->codec=0;
   obj->open=0;
   //  audio_st=0;
+  return obj;
 }
 
 void yav_free(void*obj_) {
