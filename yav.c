@@ -197,7 +197,7 @@ Y_av_create(int argc)
      and initialize the codecs */
   obj->video_st = NULL;
   //  audio_st = NULL;
-  if (obj->oc->oformat->video_codec != CODEC_ID_NONE) {
+  if (obj->oc->oformat->video_codec != AV_CODEC_ID_NONE) {
     AVCodecContext *c;
     obj->video_st = avformat_new_stream(obj->oc, NULL);
     c = obj->video_st->codec;
@@ -213,7 +213,7 @@ Y_av_create(int argc)
     c->codec_type = AVMEDIA_TYPE_VIDEO;
 
     avcodec_get_context_defaults3(c, obj->codec);
-    if (c->codec_id == CODEC_ID_NONE) c->codec_id = obj->codec->id;
+    if (c->codec_id == AV_CODEC_ID_NONE) c->codec_id = obj->codec->id;
 
     /* put sample parameters */
     c->width   = 0;
@@ -229,18 +229,18 @@ Y_av_create(int argc)
 
     // codec-specific limitations
     switch (c->codec_id) {
-    case CODEC_ID_RAWVIDEO:
-    case CODEC_ID_GIF:
+    case AV_CODEC_ID_RAWVIDEO:
+    case AV_CODEC_ID_GIF:
       if (!pix_fmt) c->pix_fmt = PIX_FMT_RGB24;
       break;
-    case CODEC_ID_MSMPEG4V3:
-    case CODEC_ID_H263:
-    case CODEC_ID_H263P:
-    case CODEC_ID_RV10:
-    case CODEC_ID_RV20:
-    case CODEC_ID_FLV1:
-    case CODEC_ID_ASV1:
-    case CODEC_ID_ASV2:
+    case AV_CODEC_ID_MSMPEG4V3:
+    case AV_CODEC_ID_H263:
+    case AV_CODEC_ID_H263P:
+    case AV_CODEC_ID_RV10:
+    case AV_CODEC_ID_RV20:
+    case AV_CODEC_ID_FLV1:
+    case AV_CODEC_ID_ASV1:
+    case AV_CODEC_ID_ASV2:
       c->max_b_frames = 0;
       break;
     default:;
@@ -278,8 +278,8 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
     }
     avpicture_fill((AVPicture *)obj->picture, picture_buf,
                    c->pix_fmt, c->width, c->height);
-    if (obj->oc->oformat->video_codec == CODEC_ID_H264 ||
-	obj->oc->oformat->video_codec == CODEC_ID_THEORA) obj->picture->pts=-1;
+    if (obj->oc->oformat->video_codec == AV_CODEC_ID_H264 ||
+	obj->oc->oformat->video_codec == AV_CODEC_ID_THEORA) obj->picture->pts=-1;
 
 
     /* if the output format is not RGB24, then a temporary RGB24
@@ -378,8 +378,8 @@ Y_av_write(int argc)
   if (obj->oc->oformat->flags & AVFMT_RAWPICTURE)
     y_error("RAW picture not supported");
 
-  if (obj->oc->oformat->video_codec == CODEC_ID_H264 ||
-      obj->oc->oformat->video_codec == CODEC_ID_THEORA) ++obj->picture->pts;
+  if (obj->oc->oformat->video_codec == AV_CODEC_ID_H264 ||
+      obj->oc->oformat->video_codec == AV_CODEC_ID_THEORA) ++obj->picture->pts;
 
   int ret=0;
 
