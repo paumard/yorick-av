@@ -1,9 +1,10 @@
-yorick-av (0.0.2git-1) UNRELEASED; urgency=low
+yorick-av (0.0.3-1) unstable; urgency=low
 
-  * New upstream release. Fixes bug:: "FTBFS with libav10", thanks to
+  * New upstream release. Fixes bug: "FTBFS with libav10", thanks to
     Moritz Muehlenhoff (Closes: #739377).
+  * Bump Standards-Version to 3.9.5 (no changes needed)
 
- -- Thibaut Paumard <thibaut@debian.org>  Wed, 19 Feb 2014 11:59:57 +0100
+ -- Thibaut Paumard <thibaut@debian.org>  Wed, 19 Feb 2014 12:29:26 +0100
 
 yorick-av (0.0.2-1) unstable; urgency=low
 

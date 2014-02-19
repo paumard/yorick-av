@@ -4,9 +4,9 @@ Priority: extra
 Maintainer: Debian Science Maintainers <debian-science-maintainers@lists.alioth.debian.org>
 Uploaders: Thibaut Paumard <thibaut@debian.org>
 Build-Depends: debhelper (>= 9), yorick-dev (>= 2),
-	       libavformat-dev (>=4:0.8), libavutil-dev (>=4:0.8),
-	       libavcodec-dev (>=4:0.8), libswscale-dev (>=4:0.8)
-Standards-Version: 3.9.4
+	       libavformat-dev (>=6:9), libavutil-dev (>=6:9),
+	       libavcodec-dev (>=6:9), libswscale-dev (>=6:9)
+Standards-Version: 3.9.5
 Vcs-Git: git://anonscm.debian.org/debian-science/packages/yorick-av.git
 Vcs-Browser: http://anonscm.debian.org/gitweb/?p=debian-science/packages/yorick-av.git
 Homepage: http://github.com/paumard/yorick-av
