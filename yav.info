@@ -1,6 +1,6 @@
 Package: yorick-av
 Kind: plugin
-Version: 0.0.1
+Version: 0.0.3
 Revision: 1
 Description: Support for LibAV output
 License: permissive

@@ -18,7 +18,7 @@ INSTALLATION
 
 First install libavcodec, libavformat, libavutil and libswscale from
 either the LibAV or the FFmpeg project (compatible versions are yet to
-check, LibAV 0.8.1 is known to work).
+check, LibAV 0.9 and 0.10 are known to work, not 0.8).
 
 Then as usual for Yorick plug-ins:
 
