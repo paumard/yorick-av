@@ -350,7 +350,7 @@ Y_av_write(int argc)
 
   long npix=dims[2]*dims[3];
 
-  uint8_t *src[4] = {data, 0, 0, 0};
+  const uint8_t *src[4] = {data, 0, 0, 0};
   int src_linesizes[4] = {3*c->width,0,0,0};
 
   if (c->pix_fmt != AV_PIX_FMT_RGB24) {
