@@ -1,8 +1,8 @@
 Package: yorick-av
 Kind: plugin
-Version: 0.0.3
+Version: 0.0.4
 Revision: 1
-Description: Support for LibAV output
+Description: Support for FFmpeg/LibAV output
 License: permissive
 Author: Thibaut Paumard
 Maintainer: Thibaut Paumard <paumard@users.sourceforge.net>
