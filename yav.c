@@ -5,7 +5,7 @@
  * example-output.c by Fabrice Bellard and keeps its license.
  *
  * Copyright (c) 2003 Fabrice Bellard
- * Copyright (c) 2012-2013 Thibaut Paumard
+ * Copyright (c) 2012-2013, 2016 Thibaut Paumard
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,8 @@
 #include <libavformat/avformat.h>
 #include <libavcodec/avcodec.h>
 #include <libswscale/swscale.h>
+#include <libavutil/imgutils.h>
+#include <libavutil/pixdesc.h>
 #include <libavutil/opt.h>
 
 #ifndef AVIO_FLAG_WRITE
@@ -53,7 +55,7 @@
 #define YAV_FRAME_RATE   24
 #define YAV_GOP_SIZE     25
 #define YAV_MAX_B_FRAMES 16
-#define YAV_PIX_FMT PIX_FMT_YUV420P /* default pix_fmt */
+#define YAV_PIX_FMT AV_PIX_FMT_YUV420P /* default pix_fmt */
 
 inline int yav_arg_set(iarg) { return (iarg >= 0) && !yarg_nil(iarg); }
 
@@ -231,7 +233,7 @@ Y_av_create(int argc)
     switch (c->codec_id) {
     case AV_CODEC_ID_RAWVIDEO:
     case AV_CODEC_ID_GIF:
-      if (!pix_fmt) c->pix_fmt = PIX_FMT_RGB24;
+      if (!pix_fmt) c->pix_fmt = AV_PIX_FMT_RGB24;
       break;
     case AV_CODEC_ID_MSMPEG4V3:
     case AV_CODEC_ID_H263:
@@ -266,14 +268,14 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
     if (avcodec_open2(c, obj->codec, NULL) < 0)
       y_error("could not open codec\n");
 
-    obj->picture = avcodec_alloc_frame();
+    obj->picture = av_frame_alloc();
     if (!obj->picture)
       y_error("Could not allocate picture");
 
     int size = avpicture_get_size(c->pix_fmt, c->width, c->height);
     uint8_t *picture_buf = av_malloc(size);
     if (!picture_buf) {
-      av_freep(obj->picture);
+      av_frame_free(&obj->picture);
       y_error("unable to allocate memory");
     }
     avpicture_fill((AVPicture *)obj->picture, picture_buf,
@@ -285,20 +287,20 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
     /* if the output format is not RGB24, then a temporary RGB24
        picture is needed too. It is then converted to the required
        output format */
-    if (c->pix_fmt != PIX_FMT_RGB24) {
-      obj->tmp_picture = avcodec_alloc_frame();
+    if (c->pix_fmt != AV_PIX_FMT_RGB24) {
+      obj->tmp_picture = av_frame_alloc();
       if (!obj->tmp_picture) {
 	y_error("Could not allocate picture");
       }
-      size = avpicture_get_size(PIX_FMT_RGB24, c->width, c->height);
+      size = avpicture_get_size(AV_PIX_FMT_RGB24, c->width, c->height);
       uint8_t *tmp_picture_buf = av_malloc(size);
       if (!tmp_picture_buf) {
-	av_freep(obj->tmp_picture);
-	av_freep(obj->picture);
+	av_frame_free(&obj->tmp_picture);
+	av_frame_free(&obj->picture);
 	y_error("unable to allocate memory");
       }
       avpicture_fill((AVPicture *)obj->tmp_picture, tmp_picture_buf,
-		     PIX_FMT_RGB24, c->width, c->height);
+		     AV_PIX_FMT_RGB24, c->width, c->height);
     }
   }
 
@@ -351,12 +353,12 @@ Y_av_write(int argc)
   uint8_t *src[4] = {data, 0, 0, 0};
   int src_linesizes[4] = {3*c->width,0,0,0};
 
-  if (c->pix_fmt != PIX_FMT_RGB24) {
+  if (c->pix_fmt != AV_PIX_FMT_RGB24) {
     /* as we only generate a RGB24 picture, we must convert it
        to the codec pixel format if needed */
     obj->img_convert_ctx = sws_getCachedContext(obj->img_convert_ctx,
 						c->width, c->height,
-						PIX_FMT_RGB24,
+						AV_PIX_FMT_RGB24,
 						c->width, c->height,
 						c->pix_fmt,
 						SWS_BICUBIC, NULL, NULL, NULL);
@@ -364,14 +366,14 @@ Y_av_write(int argc)
       y_error("Cannot initialize the conversion context");
 
     av_image_copy(obj->tmp_picture->data, obj->tmp_picture->linesize,
-    		  src, src_linesizes, PIX_FMT_RGB24, c->width, c->height);
+		  src, src_linesizes, AV_PIX_FMT_RGB24, c->width, c->height);
     sws_scale(obj->img_convert_ctx,
 	      (const uint8_t * const*)obj->tmp_picture->data,
 	      obj->tmp_picture->linesize,
 	      0, c->height, obj->picture->data, obj->picture->linesize);
   } else {
     av_image_copy(obj->picture->data, obj->picture->linesize,
-		  src, src_linesizes, PIX_FMT_RGB24, c->width, c->height);
+		  src, src_linesizes, AV_PIX_FMT_RGB24, c->width, c->height);
   }
 
   /* encode the image */
