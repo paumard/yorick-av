@@ -41,7 +41,7 @@
 #define YAV_MAX_B_FRAMES 16
 #define YAV_PIX_FMT AV_PIX_FMT_YUV420P /* default pix_fmt */
 
-inline int yav_arg_set(iarg) { return (iarg >= 0) && !yarg_nil(iarg); }
+inline int yav_arg_set(int iarg) { return (iarg >= 0) && !yarg_nil(iarg); }
 
 typedef struct yav_ctxt {
   AVFrame *picture, *tmp_picture;
@@ -49,9 +49,10 @@ typedef struct yav_ctxt {
   int frame_count, video_outbuf_size;
   AVOutputFormat *fmt;
   AVFormatContext *oc;
-  AVStream *audio_st, *video_st;
+  AVStream *video_st;
   struct SwsContext *img_convert_ctx;
   AVCodec *codec;
+  AVCodecContext *enc;
   int open;
 } yav_ctxt;
 void yav_free(void*obj);
@@ -71,15 +72,15 @@ yav_ctxt *ypush_av()
   obj->video_st=0;
   obj->img_convert_ctx = 0;
   obj->codec=0;
+  obj->enc=0;
   obj->open=0;
-  //  audio_st=0;
   return obj;
 }
 
 void yav_write_frame(yav_ctxt * obj, AVFrame * frame) {
   int ret = 0.;
   /* Set frame to NULL to close movie */
-  AVCodecContext * c = obj->video_st->codec;
+  AVCodecContext * c = obj->enc;
   /* encode the image */
   ret = avcodec_send_frame(c, frame);
   if (ret<0)
@@ -122,7 +123,7 @@ void yav_free(void*obj_) {
   //if (obj->frame_count);
   //  if (obj->video_outbuf_size);
   if (obj->video_st) {
-    avcodec_close(obj->video_st->codec);
+    avcodec_close(obj->enc);
     obj->video_st=0;
   }
   if (obj->oc) {
@@ -211,21 +212,26 @@ Y_av_create(int argc)
   /* add the audio and video streams using the default format codecs
      and initialize the codecs */
   obj->video_st = NULL;
-  //  audio_st = NULL;
   if (obj->oc->oformat->video_codec != AV_CODEC_ID_NONE) {
     AVCodecContext *c;
     obj->video_st = avformat_new_stream(obj->oc, NULL);
-    c = obj->video_st->codec;
     if (vcodec) {
       obj->codec = avcodec_find_encoder_by_name(vcodec);
       if (!obj->codec) y_error("can't find requested codec");
-      c->codec_id = obj->codec->id;
     } else {
-      c->codec_id = obj->oc->oformat->video_codec;
-      obj->codec = avcodec_find_encoder(c->codec_id);
+      obj->codec = avcodec_find_encoder(obj->oc->oformat->video_codec);
       if (!obj->codec) y_error("default codec not found");
     }
-    c->codec_type = AVMEDIA_TYPE_VIDEO;
+    c = avcodec_alloc_context3(obj->codec);
+    if (!c)
+      y_error("Could not alloc an encoding context");
+    obj->enc = c;
+
+    /* Look for bugs, remove those checks in the future */
+    if (c->codec_id != obj->codec->id)
+      y_error("c->codec_id != obj->codec->id");
+    if (c->codec_type != AVMEDIA_TYPE_VIDEO)
+      y_error("c->codec_type != AVMEDIA_TYPE_VIDEO");
 
     avcodec_get_context_defaults3(c, obj->codec);
     if (c->codec_id == AV_CODEC_ID_NONE) c->codec_id = obj->codec->id;
@@ -242,7 +248,7 @@ Y_av_create(int argc)
     c->gop_size      =  params[2]     ? params[2] : YAV_GOP_SIZE;
     c->max_b_frames  = (params[3]>=0) ? params[3] : YAV_MAX_B_FRAMES;
     if(obj->oc->oformat->flags & AVFMT_GLOBALHEADER)
-        c->flags |= CODEC_FLAG_GLOBAL_HEADER;
+        c->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
 
     // codec-specific limitations
     switch (c->codec_id) {
@@ -272,10 +278,10 @@ Y_av_create(int argc)
 }
 
 void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
-  obj->video_st->codec->width=width;
-  obj->video_st->codec->height=height;
-  if (obj->video_st->codec->codec_id == AV_CODEC_ID_MPEG1VIDEO ||
-      obj->video_st->codec->codec_id == AV_CODEC_ID_MPEG2VIDEO) {
+  obj->enc->width=width;
+  obj->enc->height=height;
+  if (obj->enc->codec_id == AV_CODEC_ID_MPEG1VIDEO ||
+      obj->enc->codec_id == AV_CODEC_ID_MPEG2VIDEO) {
     AVCPBProperties *props;
     props = (AVCPBProperties*) av_stream_new_side_data
       (obj->video_st, AV_PKT_DATA_CPB_PROPERTIES, sizeof(*props));
@@ -289,12 +295,12 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
 
   if (obj->video_st) {
     AVCodecContext *c;
-    c = obj->video_st->codec;
+    c = obj->enc;
 
     if (avcodec_open2(c, obj->codec, NULL) < 0)
       y_error("could not open codec\n");
 
-    avcodec_parameters_from_context(obj->video_st->codecpar, obj->video_st->codec);
+    avcodec_parameters_from_context(obj->video_st->codecpar, obj->enc);
 
     obj->picture = av_frame_alloc();
     if (!obj->picture)
@@ -357,7 +363,7 @@ void
 Y_av_codec_opt_set(int argc)
 {
   yav_ctxt * obj = yget_obj(argc-1, &yav_ops);
-  AVCodecContext *c = obj->video_st->codec;
+  AVCodecContext *c = obj->enc;
 
   char* name = ygets_q(argc-2);
   char* val = ygets_q(argc-3);
@@ -371,7 +377,7 @@ void
 Y_av_write(int argc)
 {
   yav_ctxt * obj = yget_obj(argc-1, &yav_ops);
-  AVCodecContext *c = obj->video_st->codec;
+  AVCodecContext *c = obj->enc;
 
   long ntot=0;
   long dims[Y_DIMSIZE]={0,0};
