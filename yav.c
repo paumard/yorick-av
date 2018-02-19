@@ -5,7 +5,7 @@
  * example-output.c by Fabrice Bellard and keeps its license.
  *
  * Copyright (c) 2003 Fabrice Bellard
- * Copyright (c) 2012-2013, 2016 Thibaut Paumard
+ * Copyright (c) 2012-2013, 2016, 2018 Thibaut Paumard
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -76,9 +76,38 @@ yav_ctxt *ypush_av()
   return obj;
 }
 
+void yav_write_frame(yav_ctxt * obj, AVFrame * frame) {
+  int ret = 0.;
+  /* Set frame to NULL to close movie */
+  AVCodecContext * c = obj->video_st->codec;
+  /* encode the image */
+  ret = avcodec_send_frame(c, frame);
+  if (ret<0)
+    y_errorn("Error submitting frame for encoding: %d", ret);
+  while (ret >=0) {
+    AVPacket pkt = { 0 };
+    av_init_packet(&pkt);
+    ret = avcodec_receive_packet(c, &pkt);
+    if (ret < 0 && ret != AVERROR(EAGAIN) && ret != AVERROR_EOF) {
+      y_errorn( "Error encoding a video frame: %d", ret);
+    } else if (ret >= 0) {
+      av_packet_rescale_ts(&pkt, c->time_base, obj->video_st->time_base);
+      pkt.stream_index = obj->video_st->index;
+      /* Write the compressed frame to the media file. */
+      ret = av_interleaved_write_frame(obj->oc, &pkt);
+      if (ret < 0) {
+	y_errorn("Error while writing video frame: %d", ret);
+      }
+    }
+  }
+}
+
 void yav_free(void*obj_) {
   yav_ctxt * obj = (yav_ctxt *)obj_;
-  if (obj->open) av_write_trailer(obj->oc);
+  if (obj->open) {
+    yav_write_frame(obj, NULL); // flush buffer of encoded frames
+    av_write_trailer(obj->oc);
+  }
   if (obj->picture){
     av_free(obj->picture->data[0]);
     av_free(obj->picture);
@@ -388,9 +417,8 @@ Y_av_write(int argc)
   if (obj->oc->oformat->video_codec == AV_CODEC_ID_H264 ||
       obj->oc->oformat->video_codec == AV_CODEC_ID_THEORA) ++obj->picture->pts;
 
-  int ret=0;
-
   if (obj->oc->oformat->flags & AVFMT_RAWPICTURE) {
+    int ret=0;
     /* Raw video case - directly store the picture in the packet */
     AVPacket pkt;
     av_init_packet(&pkt);
@@ -400,29 +428,13 @@ Y_av_write(int argc)
     // pkt.size= out_size;
     //    pkt.data = dst_picture.data[0];
     pkt.size = sizeof(AVPicture);
+    av_packet_rescale_ts(&pkt, c->time_base, obj->video_st->time_base);
     ret = av_interleaved_write_frame(obj->oc, &pkt);
+    if (ret<0)
+      y_errorn("Error writing frame: %d", ret);
   } else {
-    AVPacket pkt = { 0 };
-    int got_packet;
-    av_init_packet(&pkt);
-    /* encode the image */
-    ret = avcodec_encode_video2(c, &pkt, obj->picture, &got_packet);
-    if (ret < 0) {
-      y_errorn("Error encoding video frame: %d", ret);
-    }
-    /* If size is zero, it means the image was buffered. */
-    if (!ret && got_packet && pkt.size) {
-      av_packet_rescale_ts(&pkt, c->time_base, obj->video_st->time_base);
-      pkt.stream_index = obj->video_st->index;
-      /* Write the compressed frame to the media file. */
-      ret = av_interleaved_write_frame(obj->oc, &pkt);
-    } else {
-      ret = 0;
-    }
+    yav_write_frame(obj, obj->picture);
   }
-
-  if (ret != 0)
-    y_errorn("Error while writing video frame: %d", ret);
 
   /* return [] */
   ypush_nil();
