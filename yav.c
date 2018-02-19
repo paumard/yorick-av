@@ -34,6 +34,12 @@
 #include <libavutil/pixdesc.h>
 #include <libavutil/opt.h>
 
+/* Deprecated and removed from FFmpeg 3.5, still present in 3.2 */
+/* By assigning 0, (obj->oc->oformat->flags & AVFMT_RAWPICTURE) always evals to false. */
+#ifndef AVFMT_RAWPICTURE
+# define AVFMT_RAWPICTURE 0
+#endif
+
 /* default parameter values */
 #define YAV_BIT_RATE 400000
 #define YAV_FRAME_RATE   24
