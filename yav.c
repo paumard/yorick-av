@@ -346,7 +346,9 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
   obj->open = 1;
 
   /* write the stream header, if any */
-  avformat_write_header(obj->oc, NULL);
+  int ret = avformat_write_header(obj->oc, NULL);
+  if (ret<0)
+    y_errorn("Error writing header: %d", ret);
 
 }
 
