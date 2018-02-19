@@ -224,6 +224,10 @@ Y_av_create(int argc)
     c->bit_rate      =  params[0]     ? params[0] : YAV_BIT_RATE;
     c->time_base.den =  params[1]     ? params[1] : YAV_FRAME_RATE;
     c->time_base.num =  1;
+#   if LIBAVFORMAT_VERSION_MAJOR >= 57
+    obj->video_st->time_base.den =  c->time_base.den;
+    obj->video_st->time_base.num =  c->time_base.num;
+#   endif
     c->gop_size      =  params[2]     ? params[2] : YAV_GOP_SIZE;
     c->max_b_frames  = (params[3]>=0) ? params[3] : YAV_MAX_B_FRAMES;
     if(obj->oc->oformat->flags & AVFMT_GLOBALHEADER)
@@ -280,6 +284,9 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
     }
     avpicture_fill((AVPicture *)obj->picture, picture_buf,
                    c->pix_fmt, c->width, c->height);
+    obj->picture->width=c->width;
+    obj->picture->height=c->height;
+    obj->picture->format=c->pix_fmt;
     if (obj->oc->oformat->video_codec == AV_CODEC_ID_H264 ||
 	obj->oc->oformat->video_codec == AV_CODEC_ID_THEORA) obj->picture->pts=-1;
 
@@ -301,6 +308,9 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
       }
       avpicture_fill((AVPicture *)obj->tmp_picture, tmp_picture_buf,
 		     AV_PIX_FMT_RGB24, c->width, c->height);
+      obj->tmp_picture->width=c->width;
+      obj->tmp_picture->height=c->height;
+      obj->tmp_picture->format=c->pix_fmt;
     }
   }
 
@@ -408,6 +418,7 @@ Y_av_write(int argc)
     }
     /* If size is zero, it means the image was buffered. */
     if (!ret && got_packet && pkt.size) {
+      av_packet_rescale_ts(&pkt, c->time_base, obj->video_st->time_base);
       pkt.stream_index = obj->video_st->index;
       /* Write the compressed frame to the media file. */
       ret = av_interleaved_write_frame(obj->oc, &pkt);
