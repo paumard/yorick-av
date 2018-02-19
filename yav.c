@@ -300,14 +300,14 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
     if (!obj->picture)
       y_error("Could not allocate picture");
 
-    int size = avpicture_get_size(c->pix_fmt, c->width, c->height);
+    int size = av_image_get_buffer_size(c->pix_fmt, c->width, c->height, 1);
     uint8_t *picture_buf = av_malloc(size);
     if (!picture_buf) {
       av_frame_free(&obj->picture);
       y_error("unable to allocate memory");
     }
-    avpicture_fill((AVPicture *)obj->picture, picture_buf,
-                   c->pix_fmt, c->width, c->height);
+    av_image_fill_arrays(obj->picture->data, obj->picture->linesize, picture_buf,
+			 c->pix_fmt, c->width, c->height, 1);
     obj->picture->width=c->width;
     obj->picture->height=c->height;
     obj->picture->format=c->pix_fmt;
@@ -323,15 +323,15 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
       if (!obj->tmp_picture) {
 	y_error("Could not allocate picture");
       }
-      size = avpicture_get_size(AV_PIX_FMT_RGB24, c->width, c->height);
+      size = av_image_get_buffer_size(AV_PIX_FMT_RGB24, c->width, c->height, 1);
       uint8_t *tmp_picture_buf = av_malloc(size);
       if (!tmp_picture_buf) {
 	av_frame_free(&obj->tmp_picture);
 	av_frame_free(&obj->picture);
 	y_error("unable to allocate memory");
       }
-      avpicture_fill((AVPicture *)obj->tmp_picture, tmp_picture_buf,
-		     AV_PIX_FMT_RGB24, c->width, c->height);
+      av_image_fill_arrays(obj->tmp_picture->data, obj->tmp_picture->linesize, tmp_picture_buf,
+			   AV_PIX_FMT_RGB24, c->width, c->height, 1);
       obj->tmp_picture->width=c->width;
       obj->tmp_picture->height=c->height;
       obj->tmp_picture->format=c->pix_fmt;
