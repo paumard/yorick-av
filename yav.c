@@ -263,6 +263,17 @@ Y_av_create(int argc)
 void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
   obj->video_st->codec->width=width;
   obj->video_st->codec->height=height;
+  if (obj->video_st->codec->codec_id == AV_CODEC_ID_MPEG1VIDEO ||
+      obj->video_st->codec->codec_id == AV_CODEC_ID_MPEG2VIDEO) {
+    AVCPBProperties *props;
+    props = (AVCPBProperties*) av_stream_new_side_data
+      (obj->video_st, AV_PKT_DATA_CPB_PROPERTIES, sizeof(*props));
+    props->buffer_size = width*height*4;
+    props->max_bitrate = 0;
+    props->min_bitrate = 0;
+    props->avg_bitrate = 0;
+    props->vbv_delay = UINT64_MAX;
+  }
   av_dump_format(obj->oc, 0, obj->oc->filename, 1);
 
   if (obj->video_st) {
@@ -271,6 +282,8 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
 
     if (avcodec_open2(c, obj->codec, NULL) < 0)
       y_error("could not open codec\n");
+
+    avcodec_parameters_from_context(obj->video_st->codecpar, obj->video_st->codec);
 
     obj->picture = av_frame_alloc();
     if (!obj->picture)
