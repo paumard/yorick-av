@@ -34,22 +34,6 @@
 #include <libavutil/pixdesc.h>
 #include <libavutil/opt.h>
 
-#ifndef AVIO_FLAG_WRITE
-#  define AVIO_FLAG_WRITE AVIO_WRONLY
-#endif
-
-#if (LIBAVFORMAT_VERSION_MAJOR < 53) || \
-  ((LIBAVFORMAT_VERSION_MAJOR == 53) && (LIBAVFORMAT_VERSION_MINOR < 9))
-#  define avformat_new_stream(a, b) av_new_stream(a, 0)
-#endif
-#if (LIBAVUTIL_VERSION_MAJOR < 50) || \
-  ((LIBAVUTIL_VERSION_MAJOR == 50) && (LIBAVUTIL_VERSION_MINOR < 44))
-  // av_opt_set missing at least until this version
-  int av_opt_set (void *obj, const char * name, const char * val,
-		  int search_flags)
-  { y_error("av_opt_set unimplemented in this libav/ffmpeg"); return -1; }
-#endif
-
 /* default parameter values */
 #define YAV_BIT_RATE 400000
 #define YAV_FRAME_RATE   24
@@ -224,10 +208,8 @@ Y_av_create(int argc)
     c->bit_rate      =  params[0]     ? params[0] : YAV_BIT_RATE;
     c->time_base.den =  params[1]     ? params[1] : YAV_FRAME_RATE;
     c->time_base.num =  1;
-#   if LIBAVFORMAT_VERSION_MAJOR >= 57
     obj->video_st->time_base.den =  c->time_base.den;
     obj->video_st->time_base.num =  c->time_base.num;
-#   endif
     c->gop_size      =  params[2]     ? params[2] : YAV_GOP_SIZE;
     c->max_b_frames  = (params[3]>=0) ? params[3] : YAV_MAX_B_FRAMES;
     if(obj->oc->oformat->flags & AVFMT_GLOBALHEADER)
@@ -408,7 +390,6 @@ Y_av_write(int argc)
 
   int ret=0;
 
-#if (LIBAVCODEC_VERSION_MAJOR > 53)
   if (obj->oc->oformat->flags & AVFMT_RAWPICTURE) {
     /* Raw video case - directly store the picture in the packet */
     AVPacket pkt;
@@ -439,27 +420,6 @@ Y_av_write(int argc)
       ret = 0;
     }
   }
-#else
-  int out_size
-    = avcodec_encode_video(c, obj->video_outbuf, obj->video_outbuf_size,
-			   obj->picture);
-  /* if zero size, it means the image was buffered */
-  if (out_size > 0) {
-    AVPacket pkt;
-    av_init_packet(&pkt);
-
-    if (c->coded_frame->pts != AV_NOPTS_VALUE)
-      pkt.pts= av_rescale_q(c->coded_frame->pts, c->time_base,
-  			    obj->video_st->time_base);
-    if(c->coded_frame->key_frame)
-      pkt.flags |= AV_PKT_FLAG_KEY;
-    pkt.stream_index= obj->video_st->index;
-    pkt.data= obj->video_outbuf;
-    pkt.size= out_size;
-    /* write the compressed frame in the media file */
-    ret = av_interleaved_write_frame(obj->oc, &pkt);
-  }
-#endif
 
   if (ret != 0)
     y_errorn("Error while writing video frame: %d", ret);
