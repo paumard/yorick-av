@@ -47,11 +47,21 @@
 if (open("libav.i", "r", 1)) plug_dir, _("./", plug_dir());
 #include "libav.i"
 
-exts=["mpg", "avi", "ogg", "mkv", "mp4", "mov", "wmv", "vob"];
-vcodec=["mpeg1video", "mpeg4", "libtheora", "libtheora", "mpeg4", "mpeg4", "mpeg4", "mpeg2video"];
+exts=[];
+vcodec=[];
+grow, exts, "mkv", "ogg";
+grow, vcodec, "libtheora", "libtheora";
+grow, exts, "mkv", "mov", "mp4";
+grow, vcodec, "libx265", "libx265", "libx265";
+grow, exts, "mpg";
+grow, vcodec, "mpeg1video";
+grow, exts, "vob";
+grow, vcodec, "mpeg2video";
+grow, exts, "avi", "mkv", "mov", "mp4", "wmv";
+grow, vcodec, "mpeg4", "mpeg4", "mpeg4", "mpeg4", "mpeg4";
  
 for (e=1; e<=numberof(exts); ++e) {
-  fname="libavcheck."+exts(e);
+  fname="libavcheck-"+vcodec(e)+"."+exts(e);
   write, format="==========================================\n"+
                 "     testing extension: '%s'\n"+
                 "==========================================\n", exts(e);
@@ -73,7 +83,7 @@ for (e=1; e<=numberof(exts); ++e) {
 if (!get_env("YAV_NODISPLAY")) {
 
   require, "avtest.i";
-  for (e=1; e<=numberof(exts); ++e) avtest, "libavtest."+exts(e), vcodec=vcodec(e);
+  for (e=1; e<=numberof(exts); ++e) avtest, "libavtest-"+vcodec(e)+"."+exts(e), vcodec=vcodec(e);
 
   include,"mpgtest.i", 3;
   require, "libav-mpeg.i";

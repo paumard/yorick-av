@@ -33,7 +33,7 @@ PKG_LDFLAGS=
 EXTRA_PKGS=$(Y_EXE_PKGS)
 
 # list of additional files for clean
-PKG_CLEAN=libavtest.* libavcheck.* test.mpg
+PKG_CLEAN=libavtest* libavcheck* test.mpg
 
 # autoload file for this package, if any
 PKG_I_START=zlibav-auto.i
