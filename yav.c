@@ -323,8 +323,13 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
     obj->picture->width=c->width;
     obj->picture->height=c->height;
     obj->picture->format=c->pix_fmt;
-    if (obj->oc->oformat->video_codec == AV_CODEC_ID_H264 ||
-	obj->oc->oformat->video_codec == AV_CODEC_ID_THEORA) obj->picture->pts=-1;
+    /*
+      Initially we had it only for specific codecs, but it does not
+      seem to hurt to always set the picture PTS :
+      if (obj->oc->oformat->video_codec == AV_CODEC_ID_H264 ||
+          obj->oc->oformat->video_codec == AV_CODEC_ID_THEORA)
+    */
+    obj->picture->pts=-1;
 
 
     /* if the output format is not RGB24, then a temporary RGB24
@@ -428,8 +433,13 @@ Y_av_write(int argc)
   if (obj->oc->oformat->flags & AVFMT_RAWPICTURE)
     y_error("RAW picture not supported");
 
-  if (obj->oc->oformat->video_codec == AV_CODEC_ID_H264 ||
-      obj->oc->oformat->video_codec == AV_CODEC_ID_THEORA) ++obj->picture->pts;
+  /*
+    Initially we had it only for specific codecs, but it does not
+    seem to hurt to always set the picture PTS :
+    if (obj->oc->oformat->video_codec == AV_CODEC_ID_H264 ||
+        obj->oc->oformat->video_codec == AV_CODEC_ID_THEORA)
+  */
+  ++obj->picture->pts;
 
   if (obj->oc->oformat->flags & AVFMT_RAWPICTURE) {
     int ret=0;
