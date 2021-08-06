@@ -1,4 +1,4 @@
-prefix: "http://dhmunro.github.com/yorick-doc"
+prefix: "https://software.llnl.gov/yorick-doc"
 pkgname: "yorick-av"
 pkgtitle: "make movies in various formats using FFmpeg / LibAV"
 
