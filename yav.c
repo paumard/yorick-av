@@ -60,6 +60,7 @@ typedef struct yav_ctxt {
   AVCodec *codec;
   AVCodecContext *enc;
   int open;
+  char filename[1024];
 } yav_ctxt;
 void yav_free(void*obj);
 static y_userobj_t yav_ops = {"LibAV object", &yav_free, 0, 0, 0, 0};
@@ -213,7 +214,7 @@ Y_av_create(int argc)
   if (!obj->oc->oformat) {
     y_error("Could not find suitable output format.");
   }
-  snprintf(obj->oc->filename, sizeof(obj->oc->filename), "%s", filename);
+  snprintf(obj->filename, sizeof(obj->filename), "%s", filename);
 
   /* add the audio and video streams using the default format codecs
      and initialize the codecs */
@@ -239,7 +240,6 @@ Y_av_create(int argc)
     if (c->codec_type != AVMEDIA_TYPE_VIDEO)
       y_error("c->codec_type != AVMEDIA_TYPE_VIDEO");
 
-    avcodec_get_context_defaults3(c, obj->codec);
     if (c->codec_id == AV_CODEC_ID_NONE) c->codec_id = obj->codec->id;
 
     /* put sample parameters */
@@ -297,7 +297,7 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
     props->avg_bitrate = 0;
     props->vbv_delay = UINT64_MAX;
   }
-  av_dump_format(obj->oc, 0, obj->oc->filename, 1);
+  av_dump_format(obj->oc, 0, obj->filename, 1);
 
   if (obj->video_st) {
     AVCodecContext *c;
@@ -357,8 +357,8 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
 
   /* open the output file, if needed */
   if (!(obj->oc->oformat->flags & AVFMT_NOFILE))
-    if (avio_open(&obj->oc->pb, obj->oc->filename, AVIO_FLAG_WRITE) < 0)
-      y_errorq("Could not open '%s'", obj->oc->filename);
+    if (avio_open(&obj->oc->pb, obj->filename, AVIO_FLAG_WRITE) < 0)
+      y_errorq("Could not open '%s'", obj->filename);
 
   obj->open = 1;
 
@@ -451,7 +451,6 @@ Y_av_write(int argc)
     pkt.data= obj->video_outbuf;
     // pkt.size= out_size;
     //    pkt.data = dst_picture.data[0];
-    pkt.size = sizeof(AVPicture);
     av_packet_rescale_ts(&pkt, c->time_base, obj->video_st->time_base);
     ret = av_interleaved_write_frame(obj->oc, &pkt);
     if (ret<0)
@@ -475,5 +474,4 @@ void
 Y___av_init(int argc)
 {
   /* initialize libavcodec, and register all codecs and formats */
-  av_register_all();
 }
