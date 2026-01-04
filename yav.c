@@ -130,7 +130,7 @@ void yav_free(void*obj_) {
   //if (obj->frame_count);
   //  if (obj->video_outbuf_size);
   if (obj->video_st) {
-    avcodec_close(obj->enc);
+    avcodec_free_context(&obj->enc);
     obj->video_st=0;
   }
   if (obj->oc) {
@@ -288,14 +288,22 @@ void yav_opencodec(yav_ctxt *obj, unsigned int width, unsigned int height) {
   obj->enc->height=height;
   if (obj->enc->codec_id == AV_CODEC_ID_MPEG1VIDEO ||
       obj->enc->codec_id == AV_CODEC_ID_MPEG2VIDEO) {
-    AVCPBProperties *props;
-    props = (AVCPBProperties*) av_stream_new_side_data
-      (obj->video_st, AV_PKT_DATA_CPB_PROPERTIES, sizeof(*props));
+
+    AVCPBProperties *props = av_malloc(sizeof(AVCPBProperties));
+    if (!props) y_error("av_opencodec could not allocate memory for side data");
     props->buffer_size = width*height*4;
     props->max_bitrate = 0;
     props->min_bitrate = 0;
     props->avg_bitrate = 0;
     props->vbv_delay = UINT64_MAX;
+    AVPacketSideData * ret = av_packet_side_data_add(&obj->video_st->codecpar->coded_side_data,
+                                      &obj->video_st->codecpar->nb_coded_side_data,
+                                      AV_PKT_DATA_CPB_PROPERTIES,
+                                      (uint8_t *)props, sizeof(AVCPBProperties), 0);
+    if (ret == 0) {
+        av_freep(&props);
+        y_error("av_opencodec could not add side data");
+    }
   }
   av_dump_format(obj->oc, 0, obj->filename, 1);
 
